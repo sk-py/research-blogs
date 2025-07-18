@@ -1,0 +1,2323 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dynamic Field Configuration in CRM Portals: A Modern Approach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tiempos+Headline:wght@400;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --sage-50: #f8faf8;
+            --sage-100: #f0f4f0;
+            --sage-200: #dde5dd;
+            --sage-300: #c4d1c4;
+            --sage-400: #a3b8a3;
+            --sage-500: #7d9a7d;
+            --sage-600: #5f7a5f;
+            --sage-700: #4a5f4a;
+            --sage-800: #3d4f3d;
+            --sage-900: #344234;
+            --sage-950: #1a241a;
+            --accent-gold: #d4af37;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--sage-900);
+            background: linear-gradient(135deg, var(--sage-50) 0%, #ffffff 100%);
+        }
+        
+        .serif-heading {
+            font-family: 'Tiempos Headline', serif;
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, var(--sage-100) 0%, var(--sage-200) 50%, var(--sage-100) 100%);
+        }
+        
+        .toc-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(248, 250, 248, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--sage-200);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+        
+        .citation-link {
+            color: var(--sage-600);
+            text-decoration: none;
+            font-size: 0.875rem;
+            vertical-align: super;
+            margin-left: 2px;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .citation-link:hover {
+            color: var(--accent-gold);
+            border-bottom-color: var(--accent-gold);
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+            height: 400px;
+        }
+        
+        .bento-main {
+            grid-row: 1 / -1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        
+        .bento-side {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .bento-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--sage-200);
+            border-radius: 8px;
+            padding: 1.5rem;
+            height: 100%;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, var(--sage-50) 0%, rgba(212, 175, 55, 0.1) 100%);
+            border-left: 4px solid var(--accent-gold);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .code-block {
+            background: var(--sage-950);
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+        }
+        
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 1024px) {
+            .toc-fixed {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .toc-fixed.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mermaid-control-btn:not(.reset-zoom) {
+                display: none;
+            }
+            .mermaid-controls {
+                top: auto;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+            }
+            
+            .hero-content {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-content p {
+                font-size: 1rem;
+            }
+            
+            .bento-main {
+                height: auto;
+                min-height: 300px;
+            }
+            
+            .main-content > section {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            img {
+                max-width: 100%;
+                height: auto;
+            }
+            
+            .overflow-x-auto {
+                overflow-x: auto;
+            }
+        }
+        
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 4px;
+            background: var(--sage-200);
+            z-index: 999;
+        }
+        
+        .scroll-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--sage-600), var(--accent-gold));
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .scroll-indicator {
+                left: 0;
+            }
+        }
+    </style>
+  </head>
+
+  <body>
+    <!-- Scroll Progress Indicator -->
+    <div class="scroll-indicator">
+      <div class="scroll-progress" id="scrollProgress"></div>
+    </div>
+
+    <!-- Table of Contents -->
+    <nav class="toc-fixed" id="tableOfContents">
+      <div class="mb-8">
+        <h3 class="serif-heading text-lg font-bold text-sage-800 mb-4">Contents</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="#hero" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Introduction</a>
+          </li>
+          <li>
+            <a href="#problem" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">The Core Problem</a>
+          </li>
+          <li>
+            <a href="#solution" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Proposed Solution</a>
+          </li>
+          <li>
+            <a href="#requirements" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Key Requirements</a>
+          </li>
+          <li>
+            <a href="#industry" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Industry Practices</a>
+          </li>
+          <li>
+            <a href="#technical" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Technical Approach</a>
+          </li>
+          <li>
+            <a href="#admin-ui" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Admin UI Design</a>
+          </li>
+          <li>
+            <a href="#implementation" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Implementation Examples</a>
+          </li>
+          <li>
+            <a href="#advanced" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Advanced Scenarios</a>
+          </li>
+          <li>
+            <a href="#conclusion" class="block py-1 px-2 rounded hover:bg-sage-100 transition-colors">Conclusion</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="mt-8 pt-8 border-t border-sage-200">
+        <p class="text-xs text-sage-600 mb-4">Key Technologies</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2 py-1 bg-sage-100 text-sage-700 rounded text-xs">React</span>
+          <span class="px-2 py-1 bg-sage-100 text-sage-700 rounded text-xs">JSON Schema</span>
+          <span class="px-2 py-1 bg-sage-100 text-sage-700 rounded text-xs">PostgreSQL</span>
+          <span class="px-2 py-1 bg-sage-100 text-sage-700 rounded text-xs">Spring Boot</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Mobile TOC Toggle -->
+    <button class="lg:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg" onclick="toggleTOC()">
+      <i class="fas fa-bars text-sage-700"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- <img src="https://www.google.com/s2/favicons?sz=96&domain_url=amazon.in" alt=""> -->
+      <!-- Hero Section -->
+      <section id="hero" class="hero-gradient min-h-screen flex items-center">
+        <div class="container mx-auto px-8 py-16">
+          <div class="bento-grid mb-16">
+            <!-- Main Hero Content -->
+            <div class="bento-main hero-content relative">
+              <!-- <img src="https://kimi-web-img.moonshot.cn/img/www.csundec.com/7c952c675dcafbd22ee62598646cc77e67955f86.png" alt="Abstract visualization of data flow in a CRM system" class="absolute inset-0 w-full h-full object-cover opacity-20" size="wallpaper" aspect="wide" query="abstract crm data flow" referrerpolicy="no-referrer" data-modified="1" data-score="11589.00"/> -->
+              <div class="absolute inset-0 bg-gradient-to-br from-sage-900/80 via-sage-800/60 to-transparent"></div>
+              <div class="relative z-10 p-4 md:p-8 h-full flex flex-col justify-center">
+                <h1 class="serif-heading  text-4xl md:text-5xl lg:text-6xl font-bold text-black mb-6 leading-tight">
+                  Dynamic Field Configuration
+                  <br/>
+                  <span class="text-accent-gold">in CRM Portals</span>
+                </h1>
+                <p class="text-lg md:text-xl text-sage-100 max-w-2xl leading-relaxed">
+                  A modern approach to building flexible, maintainable form systems using JSON Schema,
+                  React, and PostgreSQL JSONB
+                </p>
+              </div>
+            </div>
+
+            <!-- Side Cards -->
+            <div class="bento-side">
+              <div class="bento-card flex-1">
+                <div class="flex items-center mb-3">
+                  <i class="fas fa-cogs text-accent-gold mr-3"></i>
+                  <h3 class="font-semibold text-sage-800">Core Concept</h3>
+                </div>
+                <p class="text-sm text-sage-600">
+                  Move from hard-coded field logic to database-driven configurations managed by administrators.
+                </p>
+              </div>
+
+              <div class="bento-card flex-1">
+                <div class="flex items-center mb-3">
+                  <i class="fas fa-database text-accent-gold mr-3"></i>
+                  <h3 class="font-semibold text-sage-800">Technology Stack</h3>
+                </div>
+                <p class="text-sm text-sage-600">
+                  React + JSON Schema + PostgreSQL JSONB + Java Spring Boot for enterprise-grade flexibility.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Key Highlights -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg border border-sage-200">
+              <h3 class="serif-heading text-xl font-bold text-sage-800 mb-3">Dynamic Configuration</h3>
+              <p class="text-sage-600">Admins customize field behavior without code changes, reducing development overhead.</p>
+            </div>
+            <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg border border-sage-200">
+              <h3 class="serif-heading text-xl font-bold text-sage-800 mb-3">Complex Dependencies</h3>
+              <p class="text-sage-600">Handle cascading dropdowns, conditional visibility, and cross-field validation rules.</p>
+            </div>
+            <div class="bg-white/80 backdrop-blur-sm p-6 rounded-lg border border-sage-200">
+              <h3 class="serif-heading text-xl font-bold text-sage-800 mb-3">Industry Standard</h3>
+              <p class="text-sage-600">Aligns with practices from Salesforce, Zoho, and Microsoft Dynamics 365.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Problem Section -->
+      <section id="problem" class="py-20 bg-white">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">The Core Problem</h2>
+
+            <div class="prose prose-lg max-w-none">
+              <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Current Challenges with Hard-Coded Conditions</h3>
+              <p class="text-sage-700 mb-6">
+                The current approach to managing field display and behavior in many CRM portals, including those built with React,
+                often involves <strong>hard-coded conditional logic directly within the frontend components</strong>.
+                This traditional method presents significant challenges as business requirements evolve and client-specific
+                customizations become more frequent and complex.
+              </p>
+
+              <div class="highlight-box">
+                <h4 class="font-semibold text-sage-800 mb-3">Key Challenges:</h4>
+                <ul class="space-y-2 text-sage-700">
+                  <li><strong>Rigid Codebase:</strong> Hard-coding conditional logic leads to a rigid and difficult-to-maintain codebase.</li>
+                  <li><strong>Development Overhead:</strong> Each new client requirement necessitates a full development cycle.</li>
+                  <li><strong>Spaghetti Code:</strong> Complexity increases exponentially with the number of clients and configurations.</li>
+                  <li><strong>Auditing Difficulties:</strong> Tracking changes and auditing field behavior becomes cumbersome.</li>
+                </ul>
+              </div>
+
+              <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6 mt-12">Goal: Dynamic Field Customization by Admins</h3>
+              <p class="text-sage-700 mb-6">
+                The primary objective is to <strong>empower CRM administrators with the ability to dynamically customize field display,
+                  behavior, and validation rules without requiring direct code changes or developer intervention</strong>.
+                This means providing a user-friendly interface within the CRM portal where admins can define which fields are visible,
+                under what conditions, what their valid values are, and how they relate to other fields.
+              </p>
+
+              <div class="bg-sage-50 p-6 rounded-lg border border-sage-200 mt-8">
+                <h4 class="font-semibold text-sage-800 mb-3">Target Benefits:</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="flex items-start space-x-3">
+                    <i class="fas fa-clock text-accent-gold mt-1"></i>
+                    <div>
+                      <h5 class="font-medium text-sage-800">Reduced Time-to-Market</h5>
+                      <p class="text-sm text-sage-600">Quick adaptation to changing business needs</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <i class="fas fa-users text-accent-gold mt-1"></i>
+                    <div>
+                      <h5 class="font-medium text-sage-800">Client-Specific Customization</h5>
+                      <p class="text-sm text-sage-600">Tailored experiences per companyId</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <i class="fas fa-code text-accent-gold mt-1"></i>
+                    <div>
+                      <h5 class="font-medium text-sage-800">Cleaner Codebase</h5>
+                      <p class="text-sm text-sage-600">Separation of concerns and reduced complexity</p>
+                    </div>
+                  </div>
+                  <div class="flex items-start space-x-3">
+                    <i class="fas fa-chart-line text-accent-gold mt-1"></i>
+                    <div>
+                      <h5 class="font-medium text-sage-800">Improved Scalability</h5>
+                      <p class="text-sm text-sage-600">Handle growing number of configurations</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Solution Section -->
+      <section id="solution" class="py-20 bg-sage-50">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Proposed Solution</h2>
+
+            <p class="text-xl text-sage-700 mb-12 leading-relaxed">
+              The proposed solution is a <strong>database-driven dynamic form system</strong> that allows administrators to define
+              form structures, field properties, and conditional logic through a dedicated user interface. These configurations
+              are stored in a database and dynamically loaded by the frontend application.
+            </p>
+
+            <!-- System Architecture Diagram -->
+            <div class="mb-12">
+              <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">System Architecture</h3>
+              <div class="mermaid-container">
+                <div class="mermaid-controls">
+                  <button class="mermaid-control-btn zoom-in" title="放大">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="mermaid-control-btn zoom-out" title="缩小">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <button class="mermaid-control-btn reset-zoom" title="重置">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                  </button>
+                  <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                    <i class="fas fa-expand"></i>
+                  </button>
+                </div>
+                <div class="mermaid" id="architecture-diagram">
+                  graph TB
+                  A[&#34;Admin UI&#34;] --&gt; B[&#34;Configuration Management&#34;]
+                  B --&gt; C[&#34;PostgreSQL JSONB Storage&#34;]
+                  C --&gt; D[&#34;Java Spring Boot API&#34;]
+                  D --&gt; E[&#34;React Frontend&#34;]
+                  E --&gt; F[&#34;Dynamic Form Rendering&#34;]
+                  F --&gt; G[&#34;End User Experience&#34;]
+
+                  H[&#34;Field Types Config&#34;] --&gt; C
+                  I[&#34;Conditional Logic&#34;] --&gt; C
+                  J[&#34;Validation Rules&#34;] --&gt; C
+
+                  style A fill:#f8faf8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style B fill:#e8f5e8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style C fill:#d4af37,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style D fill:#e8f5e8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style E fill:#f8faf8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style F fill:#e8f5e8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style G fill:#f8faf8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style H fill:#f0f4f0,stroke:#5f7a5f,stroke-width:1px,color:#344234
+                  style I fill:#f0f4f0,stroke:#5f7a5f,stroke-width:1px,color:#344234
+                  style J fill:#f0f4f0,stroke:#5f7a5f,stroke-width:1px,color:#344234
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div class="bg-white p-8 rounded-lg shadow-sm border border-sage-200">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-accent-gold/10 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-tools text-accent-gold text-xl"></i>
+                  </div>
+                  <h3 class="serif-heading text-xl font-bold text-sage-800">Admin UI</h3>
+                </div>
+                <p class="text-sage-600 mb-4">
+                  A custom Admin UI enables non-technical administrators to configure forms and field behaviors
+                  through visual rule builders and intuitive interfaces.
+                </p>
+                <ul class="text-sm text-sage-600 space-y-2">
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>Visual rule builders</li>
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>If-then logic configuration</li>
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>Field dependency management</li>
+                </ul>
+              </div>
+
+              <div class="bg-white p-8 rounded-lg shadow-sm border border-sage-200">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-accent-gold/10 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-database text-accent-gold text-xl"></i>
+                  </div>
+                  <h3 class="serif-heading text-xl font-bold text-sage-800">JSONB Storage</h3>
+                </div>
+                <p class="text-sage-600 mb-4">
+                  Configurations are stored in PostgreSQL&#39;s JSONB format, providing flexibility in schema design
+                  and efficient querying capabilities.
+                </p>
+                <ul class="text-sm text-sage-600 space-y-2">
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>Flexible schema design</li>
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>Efficient indexing</li>
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>Company-specific customizations</li>
+                </ul>
+              </div>
+
+              <div class="bg-white p-8 rounded-lg shadow-sm border border-sage-200">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-accent-gold/10 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-rocket text-accent-gold text-xl"></i>
+                  </div>
+                  <h3 class="serif-heading text-xl font-bold text-sage-800">Dynamic Loading</h3>
+                </div>
+                <p class="text-sage-600 mb-4">
+                  Frontend application loads configurations on-demand based on companyId, ensuring users
+                  always interact with the most current form version.
+                </p>
+                <ul class="text-sm text-sage-600 space-y-2">
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>On-demand configuration</li>
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>Real-time updates</li>
+                  <li class="flex items-center"><i class="fas fa-check text-accent-gold mr-2"></i>Client-specific rendering</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Requirements Section -->
+      <section id="requirements" class="py-20 bg-white">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Key Requirements</h2>
+
+            <div class="space-y-12">
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">1. Diverse Field Types</h3>
+                <p class="text-sage-700 mb-6">
+                  The system must support a wide variety of field types to accommodate different data entry needs,
+                  from standard HTML inputs to complex interactive components.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="bg-sage-50 p-6 rounded-lg">
+                    <h4 class="font-semibold text-sage-800 mb-4">Basic Input Types</h4>
+                    <div class="space-y-2 text-sm text-sage-600">
+                      <div class="flex justify-between">
+                        <span>Text, Number, Email</span>
+                        <i class="fas fa-check text-accent-gold"></i>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Password, Date, Time</span>
+                        <i class="fas fa-check text-accent-gold"></i>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Textarea, File Upload</span>
+                        <i class="fas fa-check text-accent-gold"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="bg-sage-50 p-6 rounded-lg">
+                    <h4 class="font-semibold text-sage-800 mb-4">Complex Components</h4>
+                    <div class="space-y-2 text-sm text-sage-600">
+                      <div class="flex justify-between">
+                        <span>Dropdowns, Multi-select</span>
+                        <i class="fas fa-check text-accent-gold"></i>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Radio groups, Checkboxes</span>
+                        <i class="fas fa-check text-accent-gold"></i>
+                      </div>
+                      <div class="flex justify-between">
+                        <span>Searchable dropdowns (API)</span>
+                        <i class="fas fa-check text-accent-gold"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">2. Complex Field Dependencies</h3>
+                <p class="text-sage-700 mb-6">
+                  Manage intricate relationships between fields where visibility, required status, or available options
+                  of one field depend on the value or state of other fields.
+                </p>
+
+                <div class="bg-gradient-to-r from-sage-50 to-sage-100 p-8 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-6">Dependency Examples</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                      <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <i class="fas fa-sitemap text-accent-gold text-2xl"></i>
+                      </div>
+                      <h5 class="font-semibold text-sage-800 mb-2">Cascading Dropdowns</h5>
+                      <p class="text-sm text-sage-600">Selecting a country populates state/province dropdown with relevant options</p>
+                    </div>
+                    <div class="text-center">
+                      <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <i class="fas fa-eye-slash text-accent-gold text-2xl"></i>
+                      </div>
+                      <h5 class="font-semibold text-sage-800 mb-2">Conditional Visibility</h5>
+                      <p class="text-sm text-sage-600">&#34;Specify Other&#34; field appears only if &#34;Other&#34; is selected</p>
+                    </div>
+                    <div class="text-center">
+                      <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <i class="fas fa-exclamation-triangle text-accent-gold text-2xl"></i>
+                      </div>
+                      <h5 class="font-semibold text-sage-800 mb-2">Dynamic Requiredness</h5>
+                      <p class="text-sm text-sage-600">VAT field becomes required only for business entities</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">3. Conditional Validation Rules</h3>
+                <p class="text-sage-700 mb-6">
+                  Support conditional validation rules that go beyond simple per-field constraints, validating
+                  fields based on the values of other fields or combinations of fields.
+                </p>
+
+                <div class="code-block">
+                  <pre><code>// Example: Conditional validation rule
+{
+  &#34;if&#34;: {
+    &#34;properties&#34;: { &#34;subscribe&#34;: { &#34;const&#34;: true } }
+  },
+  &#34;then&#34;: {
+    &#34;required&#34;: [&#34;email&#34;],
+    &#34;properties&#34;: {
+      &#34;email&#34;: { &#34;format&#34;: &#34;email&#34; }
+    }
+  }
+}</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">4. Dynamic Option Fetching</h3>
+                <p class="text-sage-700 mb-6">
+                  For fields like searchable dropdowns or comboboxes, support dynamic fetching of options
+                  from backend APIs, essential for fields with large datasets or complex filtering criteria.
+                </p>
+
+                <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-4">API Integration Features</h4>
+                  <ul class="space-y-3 text-sage-600">
+                    <li class="flex items-start">
+                      <i class="fas fa-api text-accent-gold mr-3 mt-1"></i>
+                      <span>Endpoint configuration in JSON schema</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-search text-accent-gold mr-3 mt-1"></i>
+                      <span>Debounced search queries as user types</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-spinner text-accent-gold mr-3 mt-1"></i>
+                      <span>Loading and error state management</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-filter text-accent-gold mr-3 mt-1"></i>
+                      <span>Dynamic filtering based on other field values</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Industry Practices Section -->
+      <section id="industry" class="py-20 bg-sage-50">
+        <div class="container mx-auto px-8">
+          <div class="max-w-6xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Industry Practices</h2>
+
+            <p class="text-xl text-sage-700 mb-12 leading-relaxed">
+              Major CRM platforms have developed sophisticated methods for dynamic field customization,
+              providing valuable insights into proven approaches and best practices.
+            </p>
+
+            <div class="mb-12">
+              <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-8">CRM Provider Capabilities</h3>
+
+              <!-- Comparison Table -->
+              <div class="bg-white rounded-lg shadow-sm border border-sage-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead class="bg-sage-100">
+                      <tr>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">CRM Provider</th>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">Customization Features</th>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">Conditional Logic</th>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">Storage Method</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-sage-200">
+                      <tr>
+                        <td class="px-6 py-4 font-semibold text-sage-800">Microsoft Dynamics 365</td>
+                        <td class="px-6 py-4 text-sage-600">Add fields, data types, form layout, client-side scripting, field-level security</td>
+                        <td class="px-6 py-4 text-sage-600">JavaScript, Business Rules</td>
+                        <td class="px-6 py-4 text-sage-600">Metadata within CRM</td>
+                      </tr>
+                      <tr class="bg-sage-50/50">
+                        <td class="px-6 py-4 font-semibold text-sage-800">SugarCRM</td>
+                        <td class="px-6 py-4 text-sage-600">Studio module, custom fields, field dependencies, &#34;Read-Only If&#34;, &#34;Required If&#34;</td>
+                        <td class="px-6 py-4 text-sage-600">Sugar Logic (formula builder)</td>
+                        <td class="px-6 py-4 text-sage-600">System-managed metadata</td>
+                      </tr>
+                      <tr>
+                        <td class="px-6 py-4 font-semibold text-sage-800">Zoho CRM</td>
+                        <td class="px-6 py-4 text-sage-600">Dependency Fields, parent-child picklists, layout-specific dependencies</td>
+                        <td class="px-6 py-4 text-sage-600">Map Dependency rules</td>
+                        <td class="px-6 py-4 text-sage-600">JSON format via API</td>
+                      </tr>
+                      <tr class="bg-sage-50/50">
+                        <td class="px-6 py-4 font-semibold text-sage-800">Salesforce</td>
+                        <td class="px-6 py-4 text-sage-600">Dynamic Forms, component-based layout, visibility rules</td>
+                        <td class="px-6 py-4 text-sage-600">Visibility rules in App Builder</td>
+                        <td class="px-6 py-4 text-sage-600">Metadata architecture</td>
+                      </tr>
+                      <tr>
+                        <td class="px-6 py-4 font-semibold text-sage-800">Oracle Visual Builder</td>
+                        <td class="px-6 py-4 text-sage-600">Dynamic form component, rule sets for display logic</td>
+                        <td class="px-6 py-4 text-sage-600">Rule sets in UI</td>
+                        <td class="px-6 py-4 text-sage-600">Configuration with data sources</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="text-sm text-sage-600 mt-4">
+                <i class="fas fa-info-circle mr-2"></i>
+                Data compiled from industry research and CRM documentation
+                <a href="https://www.zoho.com/crm/developer/docs/api/v8/get-map-dependency.html" class="citation-link">[48]</a>
+                <a href="https://support.sugarcrm.com/Documentation/Sugar_Versions/12.0/Sell/Administration_Guide/Developer_Tools/Studio/Fields/" class="citation-link">[23]</a>
+                <a href="https://trailhead.salesforce.com/content/learn/modules/lightning_app_builder/get-started-with-dynamic-forms-lab" class="citation-link">[65]</a>
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Common Patterns</h3>
+                <div class="space-y-6">
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <h4 class="font-semibold text-sage-800 mb-3 flex items-center">
+                      <i class="fas fa-palette text-accent-gold mr-3"></i>
+                      Visual Rule Builders
+                    </h4>
+                    <p class="text-sage-600 mb-3">
+                      IFTTT-style interfaces allowing administrators to define logic without writing code.
+                      Users select fields, operators, and values to construct conditions.
+                    </p>
+                    <div class="text-sm text-sage-600 bg-sage-50 p-3 rounded">
+                      <strong>Example:</strong> SugarCRM&#39;s Sugar Logic provides formula builders for conditions like &#34;Read-Only If&#34; and &#34;Required If&#34;
+                      <a href="https://support.sugarcrm.com/Documentation/Sugar_Versions/12.0/Sell/Administration_Guide/Developer_Tools/Studio/Fields/" class="citation-link">[23]</a>
+                    </div>
+                  </div>
+
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <h4 class="font-semibold text-sage-800 mb-3 flex items-center">
+                      <i class="fas fa-calculator text-accent-gold mr-3"></i>
+                      Formula Editors
+                    </h4>
+                    <p class="text-sage-600 mb-3">
+                      Text-based interfaces with syntax highlighting for complex calculations and text manipulations
+                      beyond simple conditional statements.
+                    </p>
+                    <div class="text-sm text-sage-600 bg-sage-50 p-3 rounded">
+                      Provide flexibility for advanced expressions while maintaining usability for common scenarios
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Data Storage Strategies</h3>
+                <div class="space-y-6">
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <h4 class="font-semibold text-sage-800 mb-3 flex items-center">
+                      <i class="fas fa-file-code text-accent-gold mr-3"></i>
+                      JSON/JSONB Storage
+                    </h4>
+                    <p class="text-sage-600 mb-3">
+                      Flexible, human-readable format for managing configurations. Used by Zoho CRM for dependency mappings
+                      and Google for various service configurations.
+                    </p>
+                    <div class="text-sm text-sage-600 bg-sage-50 p-3 rounded">
+                      <strong>Advantage:</strong> Easy to consume by both backend and frontend, flexible schema design
+                      <a href="https://www.zoho.com/crm/developer/docs/api/v8/get-map-dependency.html" class="citation-link">[48]</a>
+                      <a href="https://developers.google.com/data-portability/schema-reference/play" class="citation-link">[87]</a>
+                    </div>
+                  </div>
+
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <h4 class="font-semibold text-sage-800 mb-3 flex items-center">
+                      <i class="fas fa-database text-accent-gold mr-3"></i>
+                      Metadata Architecture
+                    </h4>
+                    <p class="text-sage-600 mb-3">
+                      Structured storage within CRM systems describing entities, fields, relationships, and business rules.
+                      Used by Microsoft Dynamics 365 and Salesforce.
+                    </p>
+                    <div class="text-sm text-sage-600 bg-sage-50 p-3 rounded">
+                      <strong>Advantage:</strong> Robust version control, auditing, and deployment capabilities
+                      <a href="https://www.ais.com/programmatically-setting-up-field-security-in-dynamics-crm/" class="citation-link">[3]</a>
+                      <a href="https://trailhead.salesforce.com/content/learn/modules/lightning_app_builder/get-started-with-dynamic-forms-lab" class="citation-link">[65]</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Technical Approach Section -->
+      <section id="technical" class="py-20 bg-white">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Technical Approach</h2>
+
+            <div class="mb-12">
+              <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Leveraging JSON Schema</h3>
+              <p class="text-sage-700 mb-6">
+                JSON Schema provides a standardized vocabulary to annotate and validate JSON documents, making it ideal
+                for defining dynamic forms. This approach decouples form configuration from UI code, enabling dynamic
+                rendering based on schemas fetched from backend APIs.
+              </p>
+
+              <!-- JSON Schema Example -->
+              <div class="bg-sage-50 p-6 rounded-lg border border-sage-200 mb-8">
+                <h4 class="font-semibold text-sage-800 mb-4">Example Field Configuration</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                  <div>
+                    <h5 class="font-medium text-sage-800 mb-2">Basic Properties</h5>
+                    <ul class="space-y-1 text-sage-600">
+                      <li><code>type</code>: Field data type (string, number, boolean)</li>
+                      <li><code>title</code>: Display label</li>
+                      <li><code>description</code>: Help text</li>
+                      <li><code>required</code>: Validation constraint</li>
+                      <li><code>enum</code>: Dropdown options</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 class="font-medium text-sage-800 mb-2">Advanced Properties</h5>
+                    <ul class="space-y-1 text-sage-600">
+                      <li><code>ui:component</code>: Custom UI widget</li>
+                      <li><code>ui:options</code>: Component configuration</li>
+                      <li><code>conditionalLogic</code>: Visibility rules</li>
+                      <li><code>validationRules</code>: Complex constraints</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="code-block">
+                <pre><code>// Complete JSON Schema Example
+{
+  &#34;type&#34;: &#34;object&#34;,
+  &#34;properties&#34;: {
+    &#34;name&#34;: {
+      &#34;type&#34;: &#34;string&#34;,
+      &#34;title&#34;: &#34;Full Name&#34;,
+      &#34;description&#34;: &#34;Enter your full name&#34;,
+      &#34;minLength&#34;: 2,
+      &#34;maxLength&#34;: 100
+    },
+    &#34;email&#34;: {
+      &#34;type&#34;: &#34;string&#34;,
+      &#34;format&#34;: &#34;email&#34;,
+      &#34;title&#34;: &#34;Email Address&#34;,
+      &#34;required&#34;: true
+    },
+    &#34;country&#34;: {
+      &#34;type&#34;: &#34;string&#34;,
+      &#34;title&#34;: &#34;Country&#34;,
+      &#34;enum&#34;: [&#34;USA&#34;, &#34;Canada&#34;, &#34;UK&#34;, &#34;Germany&#34;, &#34;Other&#34;]
+    },
+    &#34;state&#34;: {
+      &#34;type&#34;: &#34;string&#34;,
+      &#34;title&#34;: &#34;State/Province&#34;,
+      &#34;conditionalLogic&#34;: [
+        {
+          &#34;depFieldName&#34;: &#34;country&#34;,
+          &#34;depFieldValueCondition&#34;: &#34;=&#34;,
+          &#34;depFieldValue&#34;: &#34;USA&#34;
+        }
+      ]
+    }
+  },
+  &#34;dependentRequired&#34;: {
+    &#34;country&#34;: [&#34;state&#34;]
+  }
+}</code></pre>
+              </div>
+
+              <p class="text-sm text-sage-600 mt-4">
+                <i class="fas fa-lightbulb mr-2"></i>
+                Reference: JSON Schema documentation and implementation examples
+                <a href="https://codup.co/blog/building-dynamic-forms-in-react-with-json-schema-and-material-ui/" class="citation-link">[6]</a>
+                <a href="http://valerii-udodov.com/posts/react-json-schema-form/" class="citation-link">[59]</a>
+              </p>
+            </div>
+
+            <div class="mb-12">
+              <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">React Form Libraries</h3>
+              <p class="text-sage-700 mb-6">
+                Several React libraries facilitate building dynamic forms from JSON schemas, each with different
+                strengths and focus areas.
+              </p>
+
+              <!-- Library Comparison -->
+              <div class="bg-white rounded-lg shadow-sm border border-sage-200 overflow-hidden mb-8">
+                <div class="overflow-x-auto">
+                  <table class="w-full">
+                    <thead class="bg-sage-100">
+                      <tr>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">Library</th>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">Focus</th>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">Schema Support</th>
+                        <th class="px-6 py-4 text-left serif-heading font-bold text-sage-800">Conditional Logic</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-sage-200">
+                      <tr>
+                        <td class="px-6 py-4 font-semibold text-sage-800">react-hook-form</td>
+                        <td class="px-6 py-4 text-sage-600">Form state management, validation, performance</td>
+                        <td class="px-6 py-4 text-sage-600">Custom integration (zod, yup resolvers)</td>
+                        <td class="px-6 py-4 text-sage-600">useWatch, custom logic, unregister</td>
+                      </tr>
+                      <tr class="bg-sage-50/50">
+                        <td class="px-6 py-4 font-semibold text-sage-800">react-jsonschema-form</td>
+                        <td class="px-6 py-4 text-sage-600">Rendering from JSON Schema, validation</td>
+                        <td class="px-6 py-4 text-sage-600">Native, core feature</td>
+                        <td class="px-6 py-4 text-sage-600">Built-in if/then/else, dependencies</td>
+                      </tr>
+                      <tr>
+                        <td class="px-6 py-4 font-semibold text-sage-800">Formily</td>
+                        <td class="px-6 py-4 text-sage-600">Complex enterprise forms, high performance</td>
+                        <td class="px-6 py-4 text-sage-600">Native (JSON Schema, JSchema)</td>
+                        <td class="px-6 py-4 text-sage-600">Advanced x-reactions, x-visible</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-3 flex items-center">
+                    <i class="fas fa-tachometer-alt text-accent-gold mr-3"></i>
+                    Performance Focus
+                  </h4>
+                  <p class="text-sm text-sage-600 mb-3">
+                    <strong>react-hook-form</strong> excels in performance-critical applications with minimal re-renders
+                    and efficient state management.
+                  </p>
+                  <p class="text-xs text-sage-500">
+                    Best for: High-performance forms with custom UI components
+                    <a href="https://dzone.com/articles/dynamic-web-forms-react-enterprise-platforms" class="citation-link">[97]</a>
+                  </p>
+                </div>
+
+                <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-3 flex items-center">
+                    <i class="fas fa-code text-accent-gold mr-3"></i>
+                    Schema-First
+                  </h4>
+                  <p class="text-sm text-sage-600 mb-3">
+                    <strong>react-jsonschema-form</strong> provides native JSON Schema support with built-in
+                    validation and conditional logic.
+                  </p>
+                  <p class="text-xs text-sage-500">
+                    Best for: Rapid development with schema-driven approach
+                    <a href="http://valerii-udodov.com/posts/react-json-schema-form/" class="citation-link">[59]</a>
+                  </p>
+                </div>
+
+                <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-3 flex items-center">
+                    <i class="fas fa-building text-accent-gold mr-3"></i>
+                    Enterprise Scale
+                  </h4>
+                  <p class="text-sm text-sage-600 mb-3">
+                    <strong>Formily</strong> handles complex enterprise scenarios with advanced field linkages
+                    and independent state management.
+                  </p>
+                  <p class="text-xs text-sage-500">
+                    Best for: Large-scale applications with intricate requirements
+                    <a href="https://juejin.cn/post/7363932520953364480" class="citation-link">[27]</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Backend Integration</h3>
+              <p class="text-sage-700 mb-6">
+                Java Spring Boot backend handles storage, management, and serving of form configurations
+                through RESTful APIs and PostgreSQL JSONB integration.
+              </p>
+
+              <!-- Architecture Diagram -->
+              <div class="mermaid-container mb-8">
+                <div class="mermaid-controls">
+                  <button class="mermaid-control-btn zoom-in" title="放大">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="mermaid-control-btn zoom-out" title="缩小">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <button class="mermaid-control-btn reset-zoom" title="重置">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                  </button>
+                  <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                    <i class="fas fa-expand"></i>
+                  </button>
+                </div>
+                <div class="mermaid" id="backend-diagram">
+                  graph LR
+                  A[&#34;Admin UI&#34;] --&gt;|&#34;HTTP Requests&#34;| B[&#34;Spring Boot API&#34;]
+                  B --&gt;|&#34;CRUD Operations&#34;| C[&#34;PostgreSQL JSONB&#34;]
+                  C --&gt;|&#34;Data Retrieval&#34;| B
+                  B --&gt;|&#34;JSON Response&#34;| D[&#34;React Frontend&#34;]
+                  D --&gt;|&#34;Form Rendering&#34;| E[&#34;Dynamic Forms&#34;]
+
+                  B1[&#34;@RestController&#34;] --&gt; B
+                  B2[&#34;@Service&#34;] --&gt; B
+                  B3[&#34;@Repository&#34;] --&gt; B
+                  B4[&#34;JPA/Hibernate&#34;] --&gt; B
+
+                  style A fill:#f8faf8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style B fill:#d4af37,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style C fill:#e8f5e8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style D fill:#f8faf8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style E fill:#e8f5e8,stroke:#5f7a5f,stroke-width:2px,color:#1a241a
+                  style B1 fill:#f0f4f0,stroke:#5f7a5f,stroke-width:1px,color:#344234
+                  style B2 fill:#f0f4f0,stroke:#5f7a5f,stroke-width:1px,color:#344234
+                  style B3 fill:#f0f4f0,stroke:#5f7a5f,stroke-width:1px,color:#344234
+                  style B4 fill:#f0f4f0,stroke:#5f7a5f,stroke-width:1px,color:#344234
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-4">API Endpoints</h4>
+                  <div class="space-y-3 text-sm">
+                    <div class="flex items-center space-x-3">
+                      <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-mono">POST</span>
+                      <code class="text-sage-700">/api/form-configurations</code>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">GET</span>
+                      <code class="text-sage-700">/api/form-configurations/{id}</code>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">GET</span>
+                      <code class="text-sage-700">/api/form-configurations?companyId={id}</code>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-mono">PUT</span>
+                      <code class="text-sage-700">/api/form-configurations/{id}</code>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-mono">DELETE</span>
+                      <code class="text-sage-700">/api/form-configurations/{id}</code>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-4">PostgreSQL JSONB Benefits</h4>
+                  <ul class="space-y-2 text-sm text-sage-600">
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span>Efficient binary storage format</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span>Flexible schema without table alterations</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span>Advanced querying and indexing capabilities</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span>Native integration with JPA/Hibernate</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Admin UI Design Section -->
+      <section id="admin-ui" class="py-20 bg-sage-50">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Admin UI Design</h2>
+
+            <div class="mb-12">
+              <img src="https://kimi-web-img.moonshot.cn/img/www.crmcrate.com/7dccb470dc397b8eb40527e9ec042401c5bfc461.png" alt="CRM admin interface for configuring form fields" class="w-full h-64 object-cover rounded-lg shadow-sm border border-sage-200" size="medium" aspect="wide" style="photo" query="CRM admin interface form builder" referrerpolicy="no-referrer" data-modified="1" data-score="11597.00"/>
+            </div>
+
+            <p class="text-xl text-sage-700 mb-12 leading-relaxed">
+              The Admin UI is critical for enabling non-technical administrators to define and manage dynamic field behaviors.
+              Its design must prioritize usability and clarity while handling complex configuration scenarios.
+            </p>
+
+            <div class="space-y-12">
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Visual Rule Builders</h3>
+                <p class="text-sage-700 mb-6">
+                  Feature visual rule builders that allow administrators to define conditional logic using an intuitive
+                  &#34;if-then&#34; syntax, abstracting away the underlying JSON complexity.
+                </p>
+
+                <div class="bg-white p-8 rounded-lg shadow-sm border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-6">Rule Builder Interface Components</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                      <h5 class="font-medium text-sage-800 mb-4">Condition Builder</h5>
+                      <div class="space-y-3">
+                        <div class="flex items-center space-x-3 p-3 bg-sage-50 rounded border">
+                          <div class="w-20 text-sm font-medium text-sage-700">IF</div>
+                          <select class="flex-1 p-2 border rounded text-sm">
+                            <option>Field Name</option>
+                            <option>Country</option>
+                            <option>Business Type</option>
+                          </select>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-sage-50 rounded border">
+                          <div class="w-20 text-sm font-medium text-sage-700">OPERATOR</div>
+                          <select class="flex-1 p-2 border rounded text-sm">
+                            <option>=</option>
+                            <option>!=</option>
+                            <option>&gt;</option>
+                            <option>&lt;</option>
+                          </select>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-sage-50 rounded border">
+                          <div class="w-20 text-sm font-medium text-sage-700">VALUE</div>
+                          <input type="text" class="flex-1 p-2 border rounded text-sm" placeholder="Enter value..."/>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h5 class="font-medium text-sage-800 mb-4">Action Builder</h5>
+                      <div class="space-y-3">
+                        <div class="flex items-center space-x-3 p-3 bg-sage-50 rounded border">
+                          <div class="w-20 text-sm font-medium text-sage-700">THEN</div>
+                          <select class="flex-1 p-2 border rounded text-sm">
+                            <option>Show Field</option>
+                            <option>Hide Field</option>
+                            <option>Make Required</option>
+                            <option>Set Options</option>
+                          </select>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-sage-50 rounded border">
+                          <div class="w-20 text-sm font-medium text-sage-700">FIELD</div>
+                          <select class="flex-1 p-2 border rounded text-sm">
+                            <option>Select target field...</option>
+                            <option>State</option>
+                            <option>VAT Number</option>
+                            <option>Company Size</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mt-6 p-4 bg-sage-100 rounded-lg">
+                    <div class="text-sm text-sage-700">
+                      <strong>Generated Rule:</strong>
+                      <span class="ml-2 font-mono text-xs">
+                        IF Country = &#34;USA&#34; THEN SHOW State AND MAKE State REQUIRED
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="text-sm text-sage-600 mt-4">
+                  <i class="fas fa-info-circle mr-2"></i>
+                  Inspired by implementations in commercial form builders and CRM systems
+                  <a href="https://deviniti.com/support/addon/cloud/dynamic-forms/latest/configuration/" class="citation-link">[61]</a>
+                  <a href="https://formengine.io/" class="citation-link">[32]</a>
+                </p>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Complex Conditions</h3>
+                <p class="text-sage-700 mb-6">
+                  Support creation of complex conditions involving AND/OR logical groupings for sophisticated
+                  business rule scenarios.
+                </p>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-4">Complex Condition Example</h4>
+                  <div class="space-y-4">
+                    <div class="p-4 bg-sage-50 rounded-lg border-l-4 border-accent-gold">
+                      <div class="text-sm font-medium text-sage-800 mb-2">Rule Group 1 (AND)</div>
+                      <div class="space-y-2 ml-4">
+                        <div class="text-xs text-sage-600">• Country = &#34;USA&#34;</div>
+                        <div class="text-xs text-sage-600">• Business Type = &#34;Corporation&#34;</div>
+                      </div>
+                    </div>
+
+                    <div class="text-center">
+                      <div class="inline-flex items-center px-3 py-1 bg-sage-200 text-sage-700 rounded-full text-sm font-medium">
+                        OR
+                      </div>
+                    </div>
+
+                    <div class="p-4 bg-sage-50 rounded-lg border-l-4 border-accent-gold">
+                      <div class="text-sm font-medium text-sage-800 mb-2">Rule Group 2 (AND)</div>
+                      <div class="space-y-2 ml-4">
+                        <div class="text-xs text-sage-600">• Annual Revenue &gt; $1M</div>
+                        <div class="text-xs text-sage-600">• Employee Count &gt;= 50</div>
+                      </div>
+                    </div>
+
+                    <div class="text-center">
+                      <div class="inline-flex items-center px-3 py-1 bg-sage-800 text-white rounded-full text-sm font-medium">
+                        THEN SHOW Advanced Features
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">User Experience Principles</h3>
+                <p class="text-sage-700 mb-6">
+                  The success of the dynamic field configuration system hinges on usability for non-technical administrators.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-magic text-accent-gold text-2xl mr-3"></i>
+                      <h4 class="font-semibold text-sage-800">Intuitive Design</h4>
+                    </div>
+                    <p class="text-sm text-sage-600 mb-3">
+                      Clear labeling, logical workflows, and contextual help guide users through rule creation.
+                    </p>
+                    <ul class="text-xs text-sage-500 space-y-1">
+                      <li>• Only valid operators for selected data types</li>
+                      <li>• Tooltips and inline documentation</li>
+                      <li>• Visual feedback and previews</li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-shield-alt text-accent-gold text-2xl mr-3"></i>
+                      <h4 class="font-semibold text-sage-800">Error Handling</h4>
+                    </div>
+                    <p class="text-sm text-sage-600 mb-3">
+                      Robust validation and clear error messages prevent invalid configurations.
+                    </p>
+                    <ul class="text-xs text-sage-500 space-y-1">
+                      <li>• Real-time validation feedback</li>
+                      <li>• Conflict detection and resolution</li>
+                      <li>• Clear error messaging</li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-eye text-accent-gold text-2xl mr-3"></i>
+                      <h4 class="font-semibold text-sage-800">Live Preview</h4>
+                    </div>
+                    <p class="text-sm text-sage-600 mb-3">
+                      Preview form behavior as rules are configured to ensure desired outcomes.
+                    </p>
+                    <ul class="text-xs text-sage-500 space-y-1">
+                      <li>• Interactive form simulation</li>
+                      <li>• Rule impact visualization</li>
+                      <li>• Configuration testing</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Implementation Examples Section -->
+      <section id="implementation" class="py-20 bg-white">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Implementation Examples</h2>
+
+            <div class="space-y-12">
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">react-hook-form Implementation</h3>
+                <p class="text-sage-700 mb-6">
+                  Example implementation using react-hook-form with custom conditional logic handling,
+                  demonstrating field visibility control based on JSON configuration.
+                </p>
+
+                <div class="code-block">
+                  <pre><code>// FormInput Interface with Conditional Logic
+interface FormInput {
+  name: string;
+  type: &#39;text&#39; | &#39;email&#39; | &#39;select&#39; | &#39;checkbox&#39; | &#39;radio&#39;;
+  label: string;
+  placeholder?: string;
+  value?: any;
+  options?: Array&lt;{ text: string; val: string }&gt;;
+  validationRules?: Record&lt;string, any&gt;;
+  conditionalLogic?: ConditionalLogic[];
+  depConditionsTrueIf?: &#39;all&#39; | &#39;any&#39;;
+}
+
+interface ConditionalLogic {
+  depFieldName: string;
+  depFieldValueCondition: &#39;=&#39; | &#39;!=&#39; | &#39;&gt;&#39; | &#39;&lt;&#39; | &#39;NotEmpty&#39;;
+  depFieldValue: any;
+  andGroup?: ConditionalLogic[];
+}
+
+// DynamicInputControl Component
+const DynamicInputControl: React.FC&lt;{ field: FormInput; control: any }&gt; = ({ field, control }) =&gt; {
+  const { conditionalLogic, depConditionsTrueIf = &#39;all&#39; } = field;
+  const values = useWatch({ control });
+  
+  const passesConditionalLogic = (): boolean =&gt; {
+    if (!conditionalLogic || conditionalLogic.length === 0) return true;
+    
+    const results = conditionalLogic.map(condition =&gt; {
+      const fieldValue = values[condition.depFieldName];
+      // Evaluate condition based on operator
+      switch (condition.depFieldValueCondition) {
+        case &#39;=&#39;: return fieldValue === condition.depFieldValue;
+        case &#39;!=&#39;: return fieldValue !== condition.depFieldValue;
+        case &#39;NotEmpty&#39;: return !!fieldValue;
+        // Additional operators...
+      }
+      return false;
+    });
+    
+    return depConditionsTrueIf === &#39;all&#39; 
+      ? results.every(r =&gt; r) 
+      : results.some(r =&gt; r);
+  };
+  
+  if (!passesConditionalLogic()) {
+    unregister(field.name);
+    return null;
+  }
+  
+  // Render field based on type...
+}</code></pre>
+                </div>
+
+                <p class="text-sm text-sage-600 mt-4">
+                  <i class="fas fa-code mr-2"></i>
+                  Implementation reference and detailed examples
+                  <a href="https://devmarvels.com/creating-conditional-form-fields-with-react-hook-form-and-typescript/" class="citation-link">[100]</a>
+                  <a href="https://github.com/micahjon/rhf-conditional-logic" class="citation-link">[34]</a>
+                </p>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">JSON Schema with AJV and Material-UI</h3>
+                <p class="text-sage-700 mb-6">
+                  Implementation using react-jsonschema-form with AJV validator and Material-UI components,
+                  showcasing schema-driven form rendering and validation.
+                </p>
+
+                <div class="code-block">
+                  <pre><code>// FormBuilder Component
+const FormBuilder = () =&gt; {
+  const [schema, setSchema] = useState&lt;any&gt;({});
+  const [formData, setFormData] = useState&lt;any&gt;({});
+  
+  // Fetch schema from API
+  useEffect(() =&gt; {
+    const fetchSchema = async () =&gt; {
+      const response = await fetch(&#39;/api/form-configurations/1&#39;);
+      const data = await response.json();
+      setSchema(data.schema);
+    };
+    fetchSchema();
+  }, []);
+  
+  // Custom widget for Material-UI components
+  const widgets = {
+    TextWidget: (props: any) =&gt; (
+      &lt;TextField
+        label={props.label}
+        value={props.value || &#39;&#39;}
+        onChange={(e) =&gt; props.onChange(e.target.value)}
+        fullWidth
+        margin=&#34;normal&#34;
+      /&gt;
+    ),
+    SelectWidget: (props: any) =&gt; (
+      &lt;Select
+        value={props.value || &#39;&#39;}
+        onChange={(e) =&gt; props.onChange(e.target.value)}
+        fullWidth
+        margin=&#34;normal&#34;
+      &gt;
+        {props.options.enumOptions.map((option: any) =&gt; (
+          &lt;MenuItem key={option.value} value={option.value}&gt;
+            {option.label}
+          &lt;/MenuItem&gt;
+        ))}
+      &lt;/Select&gt;
+    )
+  };
+  
+  return (
+    &lt;Form
+      schema={schema}
+      formData={formData}
+      onChange={({ formData }) =&gt; setFormData(formData)}
+      onSubmit={({ formData }) =&gt; console.log(&#39;Submitted&#39;, formData)}
+      widgets={widgets}
+      validator={validator}
+    /&gt;
+  );
+};</code></pre>
+                </div>
+
+                <div class="bg-sage-50 p-6 rounded-lg border border-sage-200 mt-6">
+                  <h4 class="font-semibold text-sage-800 mb-4">Key Implementation Features</h4>
+                  <ul class="space-y-2 text-sm text-sage-600">
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span><strong>Dynamic Schema Loading:</strong> Fetch configuration from backend API</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span><strong>Custom Widgets:</strong> Map schema types to Material-UI components</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span><strong>AJV Validation:</strong> Robust schema validation with detailed error messages</span>
+                    </li>
+                    <li class="flex items-start">
+                      <i class="fas fa-check text-accent-gold mr-2 mt-1"></i>
+                      <span><strong>Conditional Logic:</strong> Built-in if/then/else schema support</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <p class="text-sm text-sage-600 mt-4">
+                  <i class="fas fa-code mr-2"></i>
+                  Implementation patterns and best practices
+                  <a href="https://codup.co/blog/building-dynamic-forms-in-react-with-json-schema-and-material-ui/" class="citation-link">[6]</a>
+                  <a href="http://valerii-udodov.com/posts/react-json-schema-form/" class="citation-link">[59]</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advanced Scenarios Section -->
+      <section id="advanced" class="py-20 bg-sage-50">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Advanced Scenarios</h2>
+
+            <div class="space-y-12">
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Searchable Dropdowns with API Data Fetching</h3>
+                <p class="text-sage-700 mb-6">
+                  For fields with large datasets, implement searchable dropdowns that fetch data from APIs
+                  as users type, with debouncing and loading state management.
+                </p>
+
+                <div class="bg-white p-8 rounded-lg shadow-sm border border-sage-200 mb-6">
+                  <h4 class="font-semibold text-sage-800 mb-6">API-Driven Field Configuration</h4>
+                  <div class="code-block">
+                    <pre><code>// JSON Schema for API-driven combobox
+{
+  &#34;type&#34;: &#34;object&#34;,
+  &#34;properties&#34;: {
+    &#34;product&#34;: {
+      &#34;type&#34;: &#34;string&#34;,
+      &#34;title&#34;: &#34;Product Search&#34;,
+      &#34;ui:component&#34;: &#34;combobox&#34;,
+      &#34;ui:options&#34;: {
+        &#34;apiEndpoint&#34;: &#34;/api/products/search&#34;,
+        &#34;queryParam&#34;: &#34;q&#34;,
+        &#34;labelField&#34;: &#34;name&#34;,
+        &#34;valueField&#34;: &#34;id&#34;,
+        &#34;minChars&#34;: 2,
+        &#34;debounceMs&#34;: 300
+      }
+    }
+  }
+}
+
+// React Component Implementation
+const AsyncCombobox = ({ value, onChange, options }) =&gt; {
+  const [inputValue, setInputValue] = useState(&#39;&#39;);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState&lt;any[]&gt;([]);
+  
+  const fetchOptions = useCallback(
+    debounce(async (query: string) =&gt; {
+      if (query.length &lt; options.minChars) return;
+      
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${options.apiEndpoint}?${options.queryParam}=${encodeURIComponent(query)}`
+        );
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        console.error(&#39;Fetch error:&#39;, error);
+      } finally {
+        setLoading(false);
+      }
+    }, options.debounceMs),
+    [options]
+  );
+  
+  useEffect(() =&gt; {
+    fetchOptions(inputValue);
+  }, [inputValue, fetchOptions]);
+  
+  return (
+    &lt;Autocomplete
+      options={data}
+      loading={loading}
+      onInputChange={(_, value) =&gt; setInputValue(value)}
+      onChange={(_, value) =&gt; onChange(value)}
+      getOptionLabel={(option) =&gt; option[options.labelField]}
+      renderInput={(params) =&gt; (
+        &lt;TextField
+          {...params}
+          label={options.title}
+          InputProps={{
+            ...params.InputProps,
+            endAdornment: (
+              &lt;&gt;
+                {loading ? &lt;CircularProgress size={20} /&gt; : null}
+                {params.InputProps.endAdornment}
+              &lt;/&gt;
+            )
+          }}
+        /&gt;
+      )}
+    /&gt;
+  );
+};</code></pre>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                    <h4 class="font-semibold text-sage-800 mb-3">Performance Considerations</h4>
+                    <ul class="space-y-2 text-sm text-sage-600">
+                      <li class="flex items-start">
+                        <i class="fas fa-clock text-accent-gold mr-2 mt-1"></i>
+                        <span>Debounce API calls to avoid excessive requests</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-filter text-accent-gold mr-2 mt-1"></i>
+                        <span>Minimum character threshold before searching</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-database text-accent-gold mr-2 mt-1"></i>
+                        <span>Efficient backend search implementation</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-memory text-accent-gold mr-2 mt-1"></i>
+                        <span>Client-side caching of recent searches</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div class="bg-sage-50 p-6 rounded-lg border border-sage-200">
+                    <h4 class="font-semibold text-sage-800 mb-3">User Experience Features</h4>
+                    <ul class="space-y-2 text-sm text-sage-600">
+                      <li class="flex items-start">
+                        <i class="fas fa-spinner text-accent-gold mr-2 mt-1"></i>
+                        <span>Loading state indicators</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-accent-gold mr-2 mt-1"></i>
+                        <span>Error handling and fallback options</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-list text-accent-gold mr-2 mt-1"></i>
+                        <span>Virtualized rendering for large result sets</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-history text-accent-gold mr-2 mt-1"></i>
+                        <span>Recent selections and search history</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Performance Optimization</h3>
+                <p class="text-sage-700 mb-6">
+                  Forms with complex conditional logic and numerous fields require careful performance optimization
+                  to maintain responsive user experiences.
+                </p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-tachometer-alt text-accent-gold text-2xl mr-3"></i>
+                      <h4 class="font-semibold text-sage-800">State Management</h4>
+                    </div>
+                    <p class="text-sm text-sage-600 mb-3">
+                      Use libraries like react-hook-form or Formily that minimize re-renders by managing
+                      field state independently.
+                    </p>
+                    <div class="text-xs text-sage-500 bg-sage-50 p-3 rounded">
+                      <strong>Tip:</strong> Avoid useState for each field in large forms
+                      <a href="https://juejin.cn/post/7363932520953364480" class="citation-link">[27]</a>
+                    </div>
+                  </div>
+
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-puzzle-piece text-accent-gold text-2xl mr-3"></i>
+                      <h4 class="font-semibold text-sage-800">Lazy Loading</h4>
+                    </div>
+                    <p class="text-sm text-sage-600 mb-3">
+                      Load form sections or complex field components only when needed using React.lazy
+                      and code splitting.
+                    </p>
+                    <div class="text-xs text-sage-500 bg-sage-50 p-3 rounded">
+                      <strong>Tip:</strong> Split large forms into logical sections with dynamic imports
+                    </div>
+                  </div>
+
+                  <div class="bg-white p-6 rounded-lg shadow-sm border border-sage-200">
+                    <div class="flex items-center mb-4">
+                      <i class="fas fa-memory text-accent-gold text-2xl mr-3"></i>
+                      <h4 class="font-semibold text-sage-800">Memoization</h4>
+                    </div>
+                    <p class="text-sm text-sage-600 mb-3">
+                      Use React.memo for components and useMemo/useCallback for expensive calculations
+                      to prevent unnecessary re-executions.
+                    </p>
+                    <div class="text-xs text-sage-500 bg-sage-50 p-3 rounded">
+                      <strong>Tip:</strong> Memoize condition evaluation functions and component props
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-8 bg-gradient-to-r from-sage-50 to-sage-100 p-6 rounded-lg border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-4">Additional Optimization Strategies</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <ul class="space-y-2 text-sm text-sage-600">
+                      <li class="flex items-start">
+                        <i class="fas fa-search text-accent-gold mr-2 mt-1"></i>
+                        <span><strong>Debounced API Calls:</strong> For searchable dropdowns and auto-save features</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-code text-accent-gold mr-2 mt-1"></i>
+                        <span><strong>Optimized Condition Evaluation:</strong> Efficient logic to prevent redundant calculations</span>
+                      </li>
+                    </ul>
+                    <ul class="space-y-2 text-sm text-sage-600">
+                      <li class="flex items-start">
+                        <i class="fas fa-list text-accent-gold mr-2 mt-1"></i>
+                        <span><strong>Virtualization:</strong> For very long forms or lists of fields</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="fas fa-cache text-accent-gold mr-2 mt-1"></i>
+                        <span><strong>Caching:</strong> Store evaluated conditions and API responses</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Configuration Versioning</h3>
+                <p class="text-sage-700 mb-6">
+                  Implement versioning for form configurations to maintain history, enable rollbacks,
+                  and audit modifications in multi-admin environments.
+                </p>
+
+                <div class="bg-white p-8 rounded-lg shadow-sm border border-sage-200">
+                  <h4 class="font-semibold text-sage-800 mb-6">Version Control Strategy</h4>
+                  <div class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <h5 class="font-medium text-sage-800 mb-4">Database Schema</h5>
+                        <div class="code-block">
+                          <pre><code>CREATE TABLE form_configurations (
+  id UUID PRIMARY KEY,
+  company_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  schema JSONB NOT NULL,
+  version INTEGER NOT NULL,
+  is_current BOOLEAN DEFAULT TRUE,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (company_id) REFERENCES companies(id)
+);
+
+CREATE TABLE form_configuration_versions (
+  id UUID PRIMARY KEY,
+  config_id UUID NOT NULL,
+  version INTEGER NOT NULL,
+  schema JSONB NOT NULL,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  FOREIGN KEY (config_id) REFERENCES form_configurations(id),
+  UNIQUE (config_id, version)
+);</code></pre>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h5 class="font-medium text-sage-800 mb-4">API Endpoints</h5>
+                        <div class="space-y-3 text-sm">
+                          <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">GET</span>
+                            <code class="text-sage-700">/api/form-configurations/{id}/versions</code>
+                          </div>
+                          <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-mono">GET</span>
+                            <code class="text-sage-700">/api/form-configurations/{id}/versions/{version}</code>
+                          </div>
+                          <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-mono">POST</span>
+                            <code class="text-sage-700">/api/form-configurations/{id}/restore</code>
+                          </div>
+                          <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-mono">GET</span>
+                            <code class="text-sage-700">/api/form-configurations/{id}/audit</code>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="bg-sage-50 p-4 rounded-lg">
+                      <h5 class="font-medium text-sage-800 mb-3">Versioning Benefits</h5>
+                      <ul class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-sage-600">
+                        <li class="flex items-start">
+                          <i class="fas fa-history text-accent-gold mr-2 mt-1"></i>
+                          <span>Track configuration changes over time</span>
+                        </li>
+                        <li class="flex items-start">
+                          <i class="fas fa-undo text-accent-gold mr-2 mt-1"></i>
+                          <span>Rollback to previous working versions</span>
+                        </li>
+                        <li class="flex items-start">
+                          <i class="fas fa-user text-accent-gold mr-2 mt-1"></i>
+                          <span>Audit trail of who made changes</span>
+                        </li>
+                        <li class="flex items-start">
+                          <i class="fas fa-code-branch text-accent-gold mr-2 mt-1"></i>
+                          <span>Compare different versions</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Conclusion Section -->
+      <section id="conclusion" class="py-20 bg-white">
+        <div class="container mx-auto px-8">
+          <div class="max-w-4xl mx-auto">
+            <h2 class="serif-heading text-4xl font-bold text-sage-900 mb-12">Conclusion</h2>
+
+            <div class="prose prose-lg max-w-none">
+              <p class="text-xl text-sage-700 mb-8 leading-relaxed">
+                Adopting a <strong>database-driven, JSON schema-based approach for dynamic field configuration</strong>
+                represents a significant step towards building a more flexible, maintainable, and scalable CRM portal.
+                This modern approach aligns with industry best practices and paves the way for a more adaptable
+                and future-proof solution.
+              </p>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+                <div>
+                  <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Key Benefits</h3>
+                  <div class="space-y-4">
+                    <div class="flex items-start space-x-4">
+                      <div class="w-8 h-8 bg-accent-gold/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <i class="fas fa-rocket text-accent-gold"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-sage-800">Reduced Development Cycles</h4>
+                        <p class="text-sage-600 text-sm">Administrators can make changes without developer intervention, dramatically reducing time-to-market for new features and customizations.</p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start space-x-4">
+                      <div class="w-8 h-8 bg-accent-gold/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <i class="fas fa-expand-arrows-alt text-accent-gold"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-sage-800">Increased Agility</h4>
+                        <p class="text-sage-600 text-sm">Businesses can respond quickly to changing market demands and client-specific needs without heavy development overhead.</p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start space-x-4">
+                      <div class="w-8 h-8 bg-accent-gold/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <i class="fas fa-heart text-accent-gold"></i>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-sage-800">Improved Client Satisfaction</h4>
+                        <p class="text-sage-600 text-sm">Client-specific customizations can be implemented rapidly, leading to better user experiences and higher satisfaction rates.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 class="serif-heading text-2xl font-bold text-sage-800 mb-6">Implementation Considerations</h3>
+                  <div class="space-y-4">
+                    <div class="flex items-start space-x-4">
+                      <div class="w-8 h-8 bg-sage-200 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <span class="text-sage-700 font-bold text-sm">1</span>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-sage-800">Careful Planning</h4>
+                        <p class="text-sage-600 text-sm">Initial implementation requires thoughtful design of the configuration UI and rendering logic architecture.</p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start space-x-4">
+                      <div class="w-8 h-8 bg-sage-200 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <span class="text-sage-700 font-bold text-sm">2</span>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-sage-800">Technology Stack</h4>
+                        <p class="text-sage-600 text-sm">Leverage modern technologies: React, JSON Schema, PostgreSQL JSONB, and Java Spring Boot for a robust foundation.</p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-start space-x-4">
+                      <div class="w-8 h-8 bg-sage-200 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <span class="text-sage-700 font-bold text-sm">3</span>
+                      </div>
+                      <div>
+                        <h4 class="font-semibold text-sage-800">Long-term Investment</h4>
+                        <p class="text-sage-600 text-sm">While initial development requires effort, the long-term benefits in maintainability and flexibility are substantial.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="highlight-box">
+                <h3 class="serif-heading text-xl font-bold text-sage-800 mb-4">Moving Forward</h3>
+                <p class="text-sage-700 mb-4">
+                  The transition from hard-coded field logic to dynamic, admin-configurable forms represents
+                  a paradigm shift in how CRM portals are developed and maintained. By empowering administrators
+                  with the tools to customize form behavior, organizations can achieve unprecedented agility
+                  in adapting to business needs.
+                </p>
+                <p class="text-sage-700">
+                  This approach not only reduces the burden on development teams but also creates a more
+                  sustainable and scalable architecture for long-term growth. As business requirements continue
+                  to evolve, the investment in a flexible, schema-driven form system will prove invaluable
+                  in maintaining competitive advantage and delivering exceptional user experiences.
+                </p>
+              </div>
+
+              <div class="mt-12 text-center">
+                <div class="inline-flex items-center space-x-4 bg-sage-100 px-8 py-4 rounded-lg">
+                  <i class="fas fa-lightbulb text-accent-gold text-2xl"></i>
+                  <div class="text-left">
+                    <div class="font-semibold text-sage-800">Ready to Implement?</div>
+                    <div class="text-sm text-sage-600">Start with a pilot project to validate the approach</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#f8faf8',
+                primaryTextColor: '#1a241a',
+                primaryBorderColor: '#5f7a5f',
+                lineColor: '#5f7a5f',
+                secondaryColor: '#e8f5e8',
+                tertiaryColor: '#f0f4f0',
+                background: '#ffffff',
+                mainBkg: '#f8faf8',
+                secondaryBkg: '#e8f5e8',
+                tertiaryBkg: '#f0f4f0',
+                nodeBorder: '#5f7a5f',
+                clusterBkg: '#f8faf8',
+                clusterBorder: '#5f7a5f',
+                defaultLinkColor: '#5f7a5f',
+                titleColor: '#1a241a',
+                edgeLabelBackground: '#ffffff',
+                nodeTextColor: '#1a241a'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // 获取两点之间的距离
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - 触摸事件处理
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // 单指拖动
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // 双指缩放
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // 单指拖动
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // 双指缩放
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // 重置状态
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // 延迟重置isTouch，避免鼠标事件立即触发
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // 从双指变为单指，切换为拖动模式
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize Mermaid Controls
+        initializeMermaidControls();
+
+        // Mobile TOC Toggle
+        function toggleTOC() {
+            const toc = document.getElementById('tableOfContents');
+            toc.classList.toggle('open');
+        }
+
+        // Smooth Scrolling and Progress Indicator
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollProgress = document.getElementById('scrollProgress');
+            const sections = document.querySelectorAll('section[id]');
+            const tocLinks = document.querySelectorAll('.toc-fixed a[href^="#"]');
+            
+            // Update scroll progress
+            function updateScrollProgress() {
+                const windowHeight = window.innerHeight;
+                const documentHeight = document.documentElement.scrollHeight - windowHeight;
+                const scrollTop = window.scrollY;
+                const progress = (scrollTop / documentHeight) * 100;
+                scrollProgress.style.width = progress + '%';
+                
+                // Update active section in TOC
+                let currentSection = '';
+                sections.forEach(section => {
+                    const rect = section.getBoundingClientRect();
+                    if (rect.top <= 100 && rect.bottom >= 100) {
+                        currentSection = section.id;
+                    }
+                });
+                
+                tocLinks.forEach(link => {
+                    link.classList.remove('bg-accent-gold', 'text-white');
+                    if (link.getAttribute('href') === '#' + currentSection) {
+                        link.classList.add('bg-accent-gold', 'text-white');
+                    }
+                });
+            }
+            
+            // Smooth scroll for TOC links
+            tocLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                    
+                    // Close mobile TOC
+                    if (window.innerWidth < 1024) {
+                        document.getElementById('tableOfContents').classList.remove('open');
+                    }
+                });
+            });
+            
+            // Update progress on scroll
+            window.addEventListener('scroll', updateScrollProgress);
+            updateScrollProgress(); // Initialize on load
+        });
+    </script>
+  
+
+</body></html>
