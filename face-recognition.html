@@ -1,0 +1,1767 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Building Scalable Face Recognition Systems: An Azure Face API Implementation Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'serif': ['Crimson Text', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'sage': '#9ca3af',
+                        'charcoal': '#374151',
+                        'warm-gray': '#f9fafb',
+                        'accent': '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .citation-link {
+            @apply text-accent hover:text-accent/80 transition-colors duration-200 cursor-pointer;
+        }
+        .hero-overlay {
+            background: linear-gradient(135deg, rgba(55, 65, 81, 0.9) 0%, rgba(156, 163, 175, 0.8) 100%);
+        }
+        .toc-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            z-index: 50;
+            overflow-y: auto;
+            padding: 2rem 1.5rem;
+        }
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+        .toc-link {
+            @apply block py-2 px-3 text-sm text-charcoal hover:bg-warm-gray rounded-lg transition-colors duration-200;
+        }
+        .toc-link.active {
+            @apply bg-accent text-white;
+        }
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #d1d5db 50%, transparent 100%);
+            margin: 3rem 0;
+        }
+        /* Mermaid diagram styling */
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        /* Responsive styles */
+@media (max-width: 1024px) {
+    .toc-fixed {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .toc-fixed.open {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        transition: margin-left 0.3s ease;
+    }
+    
+    .toc-fixed.open + .main-content {
+        margin-left: 280px;
+    }
+
+    .mermaid-control-btn:not(.reset-zoom) {
+        display: none;
+    }
+    .mermaid-controls {
+        top: auto;
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
+/* Additional responsiveness for small screens */
+@media (max-width: 768px) {
+    .main-content {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .hero-overlay + .relative {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .font-serif.text-3xl {
+        font-size: 1.75rem;
+    }
+    
+    .grid.grid-cols-1.md\:grid-cols-2 {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .mermaid-container {
+        padding: 15px;
+        min-height: 200px;
+    }
+}
+        
+        @media (min-width: 1025px) {
+            .toc-fixed {
+                transform: translateX(0) !important;
+            }
+            .main-content {
+                margin-left: 280px !important;
+            }
+        }
+    </style>
+  </head>
+
+  <body class="font-sans text-charcoal bg-warm-gray">
+    <!-- Fixed Table of Contents -->
+    <nav class="toc-fixed">
+      <div class="mb-6">
+        <h3 class="font-serif text-lg font-semibold text-charcoal mb-4">Table of Contents</h3>
+        <div class="space-y-1">
+          <a href="#introduction" class="toc-link">Introduction</a>
+          <a href="#architecture" class="toc-link">System Architecture</a>
+          <a href="#frontend" class="toc-link">React Native Front-End</a>
+          <a href="#backend" class="toc-link">Node.js Back-End</a>
+          <a href="#implementation" class="toc-link">Implementation Steps</a>
+          <a href="#security" class="toc-link">Security &amp; Compliance</a>
+          <a href="#cost" class="toc-link">Cost Analysis</a>
+          <a href="#alternatives" class="toc-link">Alternative Solutions</a>
+          <a href="#best-practices" class="toc-link">Best Practices</a>
+          <a href="#ethics" class="toc-link">Ethical Considerations</a>
+        </div>
+      </div>
+
+      <div class="pt-6 border-t border-gray-200">
+        <h4 class="font-medium text-sm text-charcoal mb-3">Key Metrics</h4>
+        <div class="space-y-2 text-xs text-sage">
+          <div class="flex justify-between">
+            <span>Employees</span>
+            <span class="font-medium">4,000-10,000</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Monthly Cost</span>
+            <span class="font-medium">~$615</span>
+          </div>
+          <div class="flex justify-between">
+            <span>API Transactions</span>
+            <span class="font-medium">600K/month</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Section -->
+      <section class="relative h-screen flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0">
+          <img src="https://kimi-web-img.moonshot.cn/img/s3.us-west-1.amazonaws.com/8257893de4ab206c36f9e471955fcdb127d4b6b2.jpeg" alt="Modern office building with facial recognition system" class="w-full h-full object-cover" size="wallpaper" aspect="wide" style="photo" query="facial recognition office building" referrerpolicy="no-referrer" data-modified="1" data-score="11598.00"/>
+          <div class="hero-overlay absolute inset-0"></div>
+        </div>
+
+        <div class="relative z-10 text-center text-white px-8 max-w-6xl">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div class="text-left">
+              <h1 class="font-serif text-3xl md:text-6xl font-bold mb-6 leading-tight">
+                <em class="italic">Building Scalable</em>
+                <br/>
+                Face Recognition Systems
+              </h1>
+              <p class="text-lg md:text-2xl text-gray-200 mb-8 leading-relaxed">
+                A comprehensive guide to implementing Azure Face API for enterprise employee check-in systems
+              </p>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-8 border border-white/20">
+              <h3 class="font-serif text-lg md:text-xl font-semibold mb-4">Project Overview</h3>
+              <div class="space-y-3 text-left text-sm">
+                <div class="flex items-center">
+                  <i class="fas fa-users w-6 text-accent"></i>
+                  <span><strong>Scale:</strong> 4,000-10,000 employees</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-cloud w-6 text-accent"></i>
+                  <span><strong>Solution:</strong> Azure Face API + Node.js + React Native</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-shield-alt w-6 text-accent"></i>
+                  <span><strong>Compliance:</strong> GDPR, Data Encryption</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-clock w-6 text-accent"></i>
+                  <span><strong>Response:</strong> Real-time processing</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Introduction -->
+      <section id="introduction" class="py-16 px-8 max-w-7xl mx-auto">
+        <div class="prose prose-lg max-w-none">
+          <h2 class="font-serif text-4xl font-bold text-charcoal mb-8">Introduction</h2>
+
+          <div class="bg-white rounded-2xl p-8 shadow-lg mb-12">
+            <p class="text-lg leading-relaxed mb-6">
+              Building a scalable and secure face recognition employee check-in system for <strong>4,000-10,000 employees</strong> requires careful architectural planning and technology selection. This comprehensive guide explores the recommended approach using <strong>Azure Face API</strong> for face data storage and matching, a <strong>Node.js backend</strong> for API integration and business logic, and a <strong>React Native Expo front-end</strong> for mobile image capture.
+            </p>
+
+            <div class="grid md:grid-cols-3 gap-6 mt-8">
+              <div class="bg-warm-gray p-6 rounded-xl">
+                <i class="fas fa-mobile-alt text-accent text-2xl mb-3"></i>
+                <h4 class="font-semibold mb-2">Mobile-First</h4>
+                <p class="text-sm text-sage">React Native Expo for cross-platform deployment</p>
+              </div>
+              <div class="bg-warm-gray p-6 rounded-xl">
+                <i class="fas fa-server text-accent text-2xl mb-3"></i>
+                <h4 class="font-semibold mb-2">Cloud-Native</h4>
+                <p class="text-sm text-sage">Azure Face API for scalable face recognition</p>
+              </div>
+              <div class="bg-warm-gray p-6 rounded-xl">
+                <i class="fas fa-lock text-accent text-2xl mb-3"></i>
+                <h4 class="font-semibold mb-2">Enterprise Security</h4>
+                <p class="text-sm text-sage">GDPR compliance and data encryption</p>
+              </div>
+            </div>
+          </div>
+
+          <blockquote class="border-l-4 border-accent pl-6 italic text-lg text-charcoal/80 mb-8">
+            &#34;The proposed architecture leverages Azure&#39;s PersonDirectory feature for managing large datasets, supporting up to 20 million identities while ensuring real-time processing and compliance with security regulations.&#34;
+          </blockquote>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- System Architecture -->
+      <section id="architecture" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">System Architecture Overview</h2>
+
+        <div class="grid lg:grid-cols-2 gap-12 mb-12">
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Three-Tier Architecture</h3>
+            <p class="mb-6">
+              The system employs a distributed architecture that separates concerns while maintaining robust security and scalability:
+            </p>
+
+            <div class="space-y-6">
+              <div class="flex items-start space-x-4">
+                <div class="bg-accent text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">1</div>
+                <div>
+                  <h4 class="font-semibold mb-2">React Native Expo Front-End</h4>
+                  <p class="text-sage text-sm">Mobile application for image capture, user consent, and check-in/check-out interface</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4">
+                <div class="bg-accent text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">2</div>
+                <div>
+                  <h4 class="font-semibold mb-2">Node.js Back-End Service</h4>
+                  <p class="text-sage text-sm">API orchestration, business logic, and secure Azure Face API integration</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4">
+                <div class="bg-accent text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">3</div>
+                <div>
+                  <h4 class="font-semibold mb-2">Azure Face API</h4>
+                  <p class="text-sage text-sm">Core face detection, storage, and matching engine with PersonDirectory</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <img src="https://kimi-web-img.moonshot.cn/img/miro.medium.com/0812410128565fd78be6c84db563de694ac2f306.png" alt="Three-tier cloud application architecture diagram" class="w-full rounded-xl shadow-lg" size="large" aspect="wide" style="photo" query="three-tier cloud architecture" referrerpolicy="no-referrer" data-modified="1" data-score="11598.00"/>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+          <h3 class="font-serif text-2xl font-semibold mb-6">Data Flow Architecture</h3>
+          <div class="mermaid-container">
+            <div class="mermaid-controls">
+              <button class="mermaid-control-btn zoom-in" title="放大">
+                <i class="fas fa-search-plus"></i>
+              </button>
+              <button class="mermaid-control-btn zoom-out" title="缩小">
+                <i class="fas fa-search-minus"></i>
+              </button>
+              <button class="mermaid-control-btn reset-zoom" title="重置">
+                <i class="fas fa-expand-arrows-alt"></i>
+              </button>
+              <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                <i class="fas fa-expand"></i>
+              </button>
+            </div>
+            <div class="mermaid">
+              flowchart TD
+              A[&#34;React Native App&#34;] --&gt;|&#34;HTTPS + Image Data&#34;| B[&#34;Node.js Backend&#34;]
+              B --&gt;|&#34;Secure API Key&#34;| C[&#34;Azure Key Vault&#34;]
+              C --&gt;|&#34;Retrieve Key&#34;| B
+              B --&gt;|&#34;Authenticated Request&#34;| D[&#34;Azure Face API&#34;]
+              D --&gt;|&#34;Face Detection&#34;| B
+              B --&gt;|&#34;Create Person&#34;| E[&#34;PersonDirectory&#34;]
+              E --&gt;|&#34;Store Face Data&#34;| D
+              D --&gt;|&#34;Identification Results&#34;| B
+              B --&gt;|&#34;Check-in/out Response&#34;| A
+              B --&gt;|&#34;Store Metadata&#34;| F[&#34;Application Database&#34;]
+
+              style A fill:#ffffff,stroke:#059669,stroke-width:3px,color:#374151,font-weight:600
+              style B fill:#ffffff,stroke:#059669,stroke-width:3px,color:#374151,font-weight:600
+              style C fill:#e0f2fe,stroke:#0277bd,stroke-width:3px,color:#374151,font-weight:600
+              style D fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#374151,font-weight:600
+              style E fill:#fff3e0,stroke:#ef6c00,stroke-width:3px,color:#374151,font-weight:600
+              style F fill:#e8f5e8,stroke:#2e7d32,stroke-width:3px,color:#374151,font-weight:600
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Front-End Development -->
+      <section id="frontend" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">React Native Expo Front-End</h2>
+
+        <div class="grid lg:grid-cols-2 gap-12 mb-12">
+          <div class="bg-white rounded-2xl p-8 shadow-lg">
+            <h3 class="font-serif text-2xl font-semibold mb-6">Key Features &amp; Components</h3>
+
+            <div class="space-y-4">
+              <div class="border-l-4 border-accent pl-4">
+                <h4 class="font-semibold mb-2">Camera Integration</h4>
+                <p class="text-sm text-sage mb-2">Using expo-camera module for high-quality image capture</p>
+                <code class="bg-warm-gray px-2 py-1 rounded text-xs">expo-camera</code>
+              </div>
+
+              <div class="border-l-4 border-accent pl-4">
+                <h4 class="font-semibold mb-2">User Consent</h4>
+                <p class="text-sm text-sage mb-2">GDPR-compliant consent screens with detailed explanations</p>
+                <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded">Required</span>
+              </div>
+
+              <div class="border-l-4 border-accent pl-4">
+                <h4 class="font-semibold mb-2">Image Processing</h4>
+                <p class="text-sm text-sage mb-2">Basic pre-processing and quality validation</p>
+                <code class="bg-warm-gray px-2 py-1 rounded text-xs">expo-image-manipulator</code>
+              </div>
+
+              <div class="border-l-4 border-accent pl-4">
+                <h4 class="font-semibold mb-2">Secure Communication</h4>
+                <p class="text-sm text-sage mb-2">HTTPS requests to Node.js backend</p>
+                <code class="bg-warm-gray px-2 py-1 rounded text-xs">axios/fetch</code>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <img src="https://kimi-web-img.moonshot.cn/img/www.bioid.com/1608f63c5b2839a83a36742589220f0621307580.png" alt="Smartphone screen showing a facial recognition enrollment process with consent form and face capture interface" class="w-full rounded-xl shadow-lg" size="medium" aspect="tall" style="photo" query="mobile app facial recognition enrollment screen" referrerpolicy="no-referrer" data-modified="1" data-score="11599.00"/>
+
+            <div class="mt-6 p-6 bg-warm-gray rounded-xl">
+              <h4 class="font-semibold mb-3">Security Best Practices</h4>
+              <ul class="space-y-2 text-sm text-sage">
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>No API keys in client code</li>
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>HTTPS encryption for all requests</li>
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>Secure local storage for tokens</li>
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>Code obfuscation for production</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+          <h3 class="font-serif text-2xl font-semibold mb-6">Sample React Native Structure</h3>
+          <pre class="bg-charcoal text-white p-6 rounded-xl text-sm overflow-x-auto"><code>// services/FaceApi.js (Client-side calling application&#39;s backend)
+import axios from &#34;axios&#34;;
+
+const baseURL = &#34;https://your-nodejs-backend-api.com&#34;; // Your Node.js server endpoint
+// NO AZURE SUBSCRIPTION KEY HERE
+
+export const faceApiForImageUpload = axios.create({
+  baseURL: baseURL,
+  timeout: 50000,
+  headers: {
+    &#34;Content-Type&#34;: &#34;multipart/form-data&#34; // For image uploads
+    // Authorization header for user token if applicable
+  }
+});</code></pre>
+
+          <p class="mt-4 text-sm text-sage">
+            The front-end communicates exclusively with the Node.js backend, ensuring Azure credentials remain secure and never exposed to client applications.
+            <a href="https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/tutorials/build-enrollment-app" class="citation-link">[Microsoft Learn Tutorial]</a>
+          </p>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Back-End Development -->
+      <section id="backend" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">Node.js Back-End Service</h2>
+
+        <div class="grid lg:grid-cols-3 gap-8 mb-12">
+          <div class="lg:col-span-2">
+            <h3 class="font-serif text-2xl font-semibold mb-6">Core Responsibilities</h3>
+
+            <div class="space-y-6">
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-key text-accent text-xl mr-3"></i>
+                  <h4 class="font-semibold">Secure API Key Management</h4>
+                </div>
+                <p class="text-sm text-sage mb-3">
+                  Uses Azure Key Vault for secure credential storage and retrieval. Never hardcodes API keys or endpoints.
+                </p>
+                <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Security Critical</span>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-exchange-alt text-accent text-xl mr-3"></i>
+                  <h4 class="font-semibold">Azure Face API Integration</h4>
+                </div>
+                <p class="text-sm text-sage mb-3">
+                  Orchestrates face detection, enrollment, and identification processes with Azure Face API.
+                </p>
+                <code class="bg-warm-gray px-2 py-1 rounded text-xs">@azure-rest/ai-vision-face</code>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-cogs text-accent text-xl mr-3"></i>
+                  <h4 class="font-semibold">Business Logic Processing</h4>
+                </div>
+                <p class="text-sm text-sage mb-3">
+                  Handles check-in/check-out recording, attendance tracking, and business rule enforcement.
+                </p>
+                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Custom Logic</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <img src="https://kimi-web-img.moonshot.cn/img/peq42.com/5a9f61e4790280b244713e7274620c630b8c299d.jpg" alt="Node.js server in data center" class="w-full rounded-xl shadow-lg mb-6" size="medium" aspect="wide" style="photo" query="Node.js server data center" referrerpolicy="no-referrer" data-modified="1" data-score="11593.00"/>
+
+            <div class="bg-charcoal text-white p-6 rounded-xl">
+              <h4 class="font-semibold mb-4">API Endpoints</h4>
+              <div class="space-y-3 text-sm">
+                <div class="flex items-center justify-between">
+                  <code class="bg-white/10 px-2 py-1 rounded">POST /enroll</code>
+                  <span class="text-sage">Employee registration</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <code class="bg-white/10 px-2 py-1 rounded">POST /checkin</code>
+                  <span class="text-sage">Face identification</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <code class="bg-white/10 px-2 py-1 rounded">GET /status</code>
+                  <span class="text-sage">System health check</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+          <h3 class="font-serif text-2xl font-semibold mb-6">PersonDirectory Data Management Flow</h3>
+          <div class="mermaid-container">
+            <div class="mermaid-controls">
+              <button class="mermaid-control-btn zoom-in" title="放大">
+                <i class="fas fa-search-plus"></i>
+              </button>
+              <button class="mermaid-control-btn zoom-out" title="缩小">
+                <i class="fas fa-search-minus"></i>
+              </button>
+              <button class="mermaid-control-btn reset-zoom" title="重置">
+                <i class="fas fa-expand-arrows-alt"></i>
+              </button>
+              <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                <i class="fas fa-expand"></i>
+              </button>
+            </div>
+            <div class="mermaid">
+              sequenceDiagram
+              participant RN as React Native
+              participant Node as Node.js Backend
+              participant FaceAPI as Azure Face API
+              participant PD as PersonDirectory
+
+              RN-&gt;&gt;Node: POST /enroll (Image + Employee ID)
+              Node-&gt;&gt;FaceAPI: Detect Face
+              FaceAPI--&gt;&gt;Node: faceId
+              Node-&gt;&gt;PD: Create Person
+              PD--&gt;&gt;Node: personId
+              Node-&gt;&gt;PD: Add Person Face (personId, faceId)
+              PD--&gt;&gt;Node: persistedFaceId
+              Node-&gt;&gt;RN: Enrollment Success
+
+              RN-&gt;&gt;Node: POST /checkin (Image)
+              Node-&gt;&gt;FaceAPI: Detect Face
+              FaceAPI--&gt;&gt;Node: faceId
+              Node-&gt;&gt;PD: Identify (faceId)
+              PD--&gt;&gt;Node: Candidates (personId, confidence)
+              Node-&gt;&gt;Node: Apply Confidence Threshold
+              Node-&gt;&gt;RN: Check-in Success + Employee ID
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Implementation Steps -->
+      <section id="implementation" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">Implementation Steps</h2>
+
+        <div class="grid lg:grid-cols-2 gap-12 mb-12">
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Development Roadmap</h3>
+
+            <div class="space-y-4">
+              <div class="flex items-start space-x-4">
+                <div class="bg-accent text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+                <div class="flex-1">
+                  <h4 class="font-semibold mb-2">Azure Resource Setup</h4>
+                  <p class="text-sm text-sage mb-2">Create Face API resource, configure pricing tier (S0 for production), and secure API keys</p>
+                  <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded">1-2 hours</span>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4">
+                <div class="bg-accent text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                <div class="flex-1">
+                  <h4 class="font-semibold mb-2">Node.js Backend Development</h4>
+                  <p class="text-sm text-sage mb-2">Set up Express server, Azure SDK integration, and API endpoints</p>
+                  <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded">2-3 days</span>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4">
+                <div class="bg-accent text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                <div class="flex-1">
+                  <h4 class="font-semibold mb-2">React Native App</h4>
+                  <p class="text-sm text-sage mb-2">Camera integration, consent screens, and API communication</p>
+                  <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded">3-5 days</span>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-4">
+                <div class="bg-accent text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
+                <div class="flex-1">
+                  <h4 class="font-semibold mb-2">Testing &amp; Validation</h4>
+                  <p class="text-sm text-sage mb-2">Performance testing, security validation, and GDPR compliance checks</p>
+                  <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded">1 week</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <img src="https://kimi-web-img.moonshot.cn/img/roykim.ca/9770a0507518c3d0aae6a088dbc572a860632c9b.png" alt="Developer setting up Azure cloud services" class="w-full rounded-xl shadow-lg" size="medium" aspect="wide" style="photo" query="azure portal setup" referrerpolicy="no-referrer" data-modified="1" data-score="11589.00"/>
+
+            <div class="mt-6 bg-white rounded-xl p-6 shadow-lg">
+              <h4 class="font-semibold mb-4">Azure Face API Configuration</h4>
+              <div class="space-y-3 text-sm">
+                <div class="flex items-center justify-between">
+                  <span class="text-sage">Resource Name</span>
+                  <code class="bg-warm-gray px-2 py-1 rounded">attendance-app</code>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sage">Pricing Tier</span>
+                  <span class="font-medium">Standard S0</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sage">Region</span>
+                  <span class="font-medium">West Europe</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sage">Max Persons</span>
+                  <span class="font-medium">20M (PersonDirectory)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+          <h3 class="font-serif text-2xl font-semibold mb-6">Technical Implementation Details</h3>
+
+          <div class="grid md:grid-cols-2 gap-8">
+            <div>
+              <h4 class="font-semibold mb-4">Enrollment Process</h4>
+              <div class="space-y-3 text-sm">
+                <div class="flex items-center">
+                  <i class="fas fa-camera text-accent mr-3"></i>
+                  <span>Capture employee image with quality validation</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-user-check text-accent mr-3"></i>
+                  <span>Verify employee identity and obtain consent</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-database text-accent mr-3"></i>
+                  <span>Create PersonDirectory entry with face data</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-link text-accent mr-3"></i>
+                  <span>Link personId to employee record</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="font-semibold mb-4">Identification Process</h4>
+              <div class="space-y-3 text-sm">
+                <div class="flex items-center">
+                  <i class="fas fa-search text-accent mr-3"></i>
+                  <span>Detect face in captured image</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-crosshairs text-accent mr-3"></i>
+                  <span>Generate face descriptor vector</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-users text-accent mr-3"></i>
+                  <span>Identify against PersonDirectory</span>
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-chart-line text-accent mr-3"></i>
+                  <span>Apply confidence threshold (e.g., 0.5+)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Security &amp; Compliance -->
+      <section id="security" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">Security &amp; Privacy Compliance</h2>
+
+        <div class="grid lg:grid-cols-3 gap-8 mb-12">
+          <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-gavel text-accent text-2xl mr-3"></i>
+              <h3 class="font-serif text-xl font-semibold">GDPR Compliance</h3>
+            </div>
+            <ul class="space-y-2 text-sm text-sage">
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Explicit user consent</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Data minimization principles</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Right to deletion</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Transparency notices</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Privacy Impact Assessments</li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-lock text-accent text-2xl mr-3"></i>
+              <h3 class="font-serif text-xl font-semibold">Data Encryption</h3>
+            </div>
+            <ul class="space-y-2 text-sm text-sage">
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>HTTPS/TLS for data in transit</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>AES-256 encryption at rest</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>FIPS 140-2 compliance</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Customer-managed keys option</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Double encryption available</li>
+            </ul>
+          </div>
+
+          <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-shield-alt text-accent text-2xl mr-3"></i>
+              <h3 class="font-serif text-xl font-semibold">Access Control</h3>
+            </div>
+            <ul class="space-y-2 text-sm text-sage">
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Azure AD RBAC integration</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Azure Key Vault for secrets</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Managed identities</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Audit logging</li>
+              <li class="flex items-start"><i class="fas fa-check text-accent mr-2 mt-1"></i>Least privilege principles</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg mb-12">
+          <h3 class="font-serif text-2xl font-semibold mb-6">Compliance Framework</h3>
+          <div class="grid md:grid-cols-2 gap-8">
+            <div>
+              <h4 class="font-semibold mb-4">Organizational Responsibilities</h4>
+              <div class="space-y-3">
+                <div class="p-4 bg-warm-gray rounded-lg">
+                  <h5 class="font-medium mb-2">Data Controller Obligations</h5>
+                  <p class="text-sm text-sage">Provide clear notice, obtain explicit consent, and manage data subject rights</p>
+                </div>
+                <div class="p-4 bg-warm-gray rounded-lg">
+                  <h5 class="font-medium mb-2">Security Implementation</h5>
+                  <p class="text-sm text-sage">Implement technical and organizational measures to protect biometric data</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="font-semibold mb-4">Microsoft Azure Commitments</h4>
+              <div class="space-y-3">
+                <div class="p-4 bg-warm-gray rounded-lg">
+                  <h5 class="font-medium mb-2">Platform Security</h5>
+                  <p class="text-sm text-sage">Infrastructure security, encryption, and compliance certifications</p>
+                </div>
+                <div class="p-4 bg-warm-gray rounded-lg">
+                  <h5 class="font-medium mb-2">Responsible AI</h5>
+                  <p class="text-sm text-sage">Ethical AI principles and limited access to sensitive features</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <blockquote class="border-l-4 border-accent pl-6 italic text-lg text-charcoal/80 mb-8">
+          &#34;Microsoft states that if their products are used to process Biometric Data, the customer is responsible for providing clear notice, obtaining explicit consent, and deleting data when no longer needed.&#34;
+          <a href="https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview-identity" class="citation-link">[Microsoft Learn]</a>
+        </blockquote>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Cost Analysis -->
+      <section id="cost" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">Cost Analysis &amp; Optimization</h2>
+
+        <div class="grid lg:grid-cols-2 gap-12 mb-12">
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Pricing Model Breakdown</h3>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg mb-6">
+              <h4 class="font-semibold mb-4">Azure Face API Costs</h4>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center">
+                  <span class="text-sage">Standard Transactions</span>
+                  <span class="font-medium">$1.00 / 1,000</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sage">Face Storage</span>
+                  <span class="font-medium">$0.01 / 1,000 faces/month</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sage">Liveness Detection</span>
+                  <span class="font-medium">$15.50 / 1,000</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-sage">Free Tier</span>
+                  <span class="font-medium">30,000 transactions/month</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+              <h4 class="font-semibold mb-4">Cost Optimization Strategies</h4>
+              <ul class="space-y-2 text-sm">
+                <li class="flex items-start"><i class="fas fa-lightbulb text-accent mr-2 mt-1"></i>Use PersonDirectory to avoid training costs</li>
+                <li class="flex items-start"><i class="fas fa-lightbulb text-accent mr-2 mt-1"></i>Targeted liveness detection</li>
+                <li class="flex items-start"><i class="fas fa-lightbulb text-accent mr-2 mt-1"></i>Efficient image quality validation</li>
+                <li class="flex items-start"><i class="fas fa-lightbulb text-accent mr-2 mt-1"></i>Prune inactive employee data</li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Monthly Cost Estimation</h3>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg mb-6">
+              <h4 class="font-semibold mb-4">Base Scenario (10,000 Employees)</h4>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-sage">Daily check-in/out transactions</span>
+                  <span class="font-medium">20,000 (2 per employee)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sage">Monthly transactions</span>
+                  <span class="font-medium">600,000</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sage">Additional operations</span>
+                  <span class="font-medium">15,000</span>
+                </div>
+                <div class="border-t pt-3">
+                  <div class="flex justify-between font-semibold">
+                    <span>Total Monthly Cost</span>
+                    <span class="text-accent">$615.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+              <h4 class="font-semibold text-red-800 mb-3">With Liveness Detection</h4>
+              <p class="text-sm text-red-700 mb-3">
+                Adding liveness detection to every transaction significantly increases costs:
+              </p>
+              <div class="text-2xl font-bold text-red-800">$6,200/month</div>
+              <p class="text-xs text-red-600 mt-2">Recommend targeted use for high-security scenarios only</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+          <h3 class="font-serif text-2xl font-semibold mb-6">Comparative Cost Analysis</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 font-semibold">Service</th>
+                  <th class="text-right py-3 px-4 font-semibold">2,500 Employees</th>
+                  <th class="text-right py-3 px-4 font-semibold">10,000 Employees</th>
+                  <th class="text-left py-3 px-4 font-semibold">Notes</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <td class="py-3 px-4 font-medium">Azure Face API</td>
+                  <td class="py-3 px-4 text-right">$50.25</td>
+                  <td class="py-3 px-4 text-right">$615.00</td>
+                  <td class="py-3 px-4 text-sage">Without liveness</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Amazon Rekognition</td>
+                  <td class="py-3 px-4 text-right">$35.00</td>
+                  <td class="py-3 px-4 text-right">~$500.00</td>
+                  <td class="py-3 px-4 text-sage">Estimated based on sample</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Google Cloud Vision</td>
+                  <td class="py-3 px-4 text-right">$300.00</td>
+                  <td class="py-3 px-4 text-right">$1,800.00</td>
+                  <td class="py-3 px-4 text-sage">Face detection only</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-4 text-sm text-sage">
+            <a href="https://azure.microsoft.com/en-ca/pricing/details/cognitive-services/face-api/" class="citation-link">[Azure Pricing Details]</a>
+            <a href="https://medium.com/dsf-developers/face-recognition-assessment-aws-face-rekognition-15921d65b351" class="citation-link">[AWS Cost Analysis]</a>
+          </p>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Alternative Solutions -->
+      <section id="alternatives" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">Alternative Solutions &amp; Comparison</h2>
+
+        <div class="grid lg:grid-cols-3 gap-8 mb-12">
+          <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center mb-4">
+              <i class="fab fa-aws text-orange-500 text-2xl mr-3"></i>
+              <h3 class="font-serif text-xl font-semibold">Amazon Rekognition</h3>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Strong AWS ecosystem integration</span>
+              </div>
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Adjustable accuracy settings</span>
+              </div>
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Competitive pricing</span>
+              </div>
+              <div class="flex items-center text-red-600">
+                <i class="fas fa-minus mr-2"></i>
+                <span>Complex setup and management</span>
+              </div>
+              <div class="flex items-center text-red-600">
+                <i class="fas fa-minus mr-2"></i>
+                <span>Less restrictive access controls</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center mb-4">
+              <i class="fab fa-google text-blue-500 text-2xl mr-3"></i>
+              <h3 class="font-serif text-xl font-semibold">Google Cloud Vision</h3>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Strong AI/ML capabilities</span>
+              </div>
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Privacy-focused approach</span>
+              </div>
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>$300 free credit</span>
+              </div>
+              <div class="flex items-center text-red-600">
+                <i class="fas fa-minus mr-2"></i>
+                <span>No native recognition service</span>
+              </div>
+              <div class="flex items-center text-red-600">
+                <i class="fas fa-minus mr-2"></i>
+                <span>Custom development required</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-6 shadow-lg">
+            <div class="flex items-center mb-4">
+              <i class="fas fa-code text-purple-500 text-2xl mr-3"></i>
+              <h3 class="font-serif text-xl font-semibold">On-Device Libraries</h3>
+            </div>
+            <div class="space-y-3 text-sm">
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Enhanced privacy</span>
+              </div>
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>No cloud dependency</span>
+              </div>
+              <div class="flex items-center text-green-600">
+                <i class="fas fa-plus mr-2"></i>
+                <span>Reduced operational costs</span>
+              </div>
+              <div class="flex items-center text-red-600">
+                <i class="fas fa-minus mr-2"></i>
+                <span>Lower accuracy</span>
+              </div>
+              <div class="flex items-center text-red-600">
+                <i class="fas fa-minus mr-2"></i>
+                <span>Complex development</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+          <h3 class="font-serif text-2xl font-semibold mb-6">Feature Comparison Matrix</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 font-semibold">Feature</th>
+                  <th class="text-center py-3 px-4 font-semibold">Azure Face API</th>
+                  <th class="text-center py-3 px-4 font-semibold">Amazon Rekognition</th>
+                  <th class="text-center py-3 px-4 font-semibold">Google Cloud Vision</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <td class="py-3 px-4 font-medium">Face Detection</td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Face Recognition</td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-times text-red-500"></i></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Liveness Detection</td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-question text-yellow-500"></i></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Large Dataset Support</td>
+                  <td class="py-3 px-4 text-center">20M (PersonDirectory)</td>
+                  <td class="py-3 px-4 text-center">Scalable Collections</td>
+                  <td class="py-3 px-4 text-center">Custom Implementation</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">GDPR Compliance</td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Responsible AI</td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-exclamation text-yellow-500"></i></td>
+                  <td class="py-3 px-4 text-center"><i class="fas fa-check text-green-500"></i></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Best Practices -->
+      <section id="best-practices" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">Best Practices for Large-Scale Deployment</h2>
+
+        <div class="grid lg:grid-cols-2 gap-12 mb-12">
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Performance Optimization</h3>
+
+            <div class="space-y-6">
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h4 class="font-semibold mb-3 flex items-center">
+                  <i class="fas fa-tachometer-alt text-accent mr-2"></i>
+                  Image Quality Optimization
+                </h4>
+                <ul class="space-y-2 text-sm text-sage">
+                  <li>• Guide users for proper lighting and positioning</li>
+                  <li>• Implement real-time quality feedback</li>
+                  <li>• Optimize image size for transmission</li>
+                  <li>• Use appropriate compression techniques</li>
+                </ul>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h4 class="font-semibold mb-3 flex items-center">
+                  <i class="fas fa-server text-accent mr-2"></i>
+                  Backend Scaling
+                </h4>
+                <ul class="space-y-2 text-sm text-sage">
+                  <li>• Use asynchronous processing patterns</li>
+                  <li>• Implement connection pooling</li>
+                  <li>• Deploy with load balancing</li>
+                  <li>• Design for stateless horizontal scaling</li>
+                </ul>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h4 class="font-semibold mb-3 flex items-center">
+                  <i class="fas fa-database text-accent mr-2"></i>
+                  Data Structure Selection
+                </h4>
+                <ul class="space-y-2 text-sm text-sage">
+                  <li>• Use PersonDirectory over LargePersonGroup</li>
+                  <li>• Leverage DynamicPersonGroup for subsets</li>
+                  <li>• Avoid training operation overhead</li>
+                  <li>• Support for 20 million identities</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Monitoring &amp; Maintenance</h3>
+
+            <div class="space-y-6">
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h4 class="font-semibold mb-3 flex items-center">
+                  <i class="fas fa-chart-line text-accent mr-2"></i>
+                  System Monitoring
+                </h4>
+                <ul class="space-y-2 text-sm text-sage">
+                  <li>• Track Transactions Per Second (TPS)</li>
+                  <li>• Monitor API latency and success rates</li>
+                  <li>• Set up automated alerts</li>
+                  <li>• Use Azure Monitor and Application Insights</li>
+                </ul>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h4 class="font-semibold mb-3 flex items-center">
+                  <i class="fas fa-broom text-accent mr-2"></i>
+                  Data Hygiene
+                </h4>
+                <ul class="space-y-2 text-sm text-sage">
+                  <li>• Regular cleanup of inactive employee data</li>
+                  <li>• Implement retention policies</li>
+                  <li>• Periodic re-enrollment processes</li>
+                  <li>• Automated data lifecycle management</li>
+                </ul>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-lg">
+                <h4 class="font-semibold mb-3 flex items-center">
+                  <i class="fas fa-shield-alt text-accent mr-2"></i>
+                  Security Maintenance
+                </h4>
+                <ul class="space-y-2 text-sm text-sage">
+                  <li>• Regular key rotation</li>
+                  <li>• Security patch management</li>
+                  <li>• Access log reviews</li>
+                  <li>• Backup and recovery procedures</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+          <h3 class="font-serif text-2xl font-semibold mb-6">PersonDirectory vs LargePersonGroup Comparison</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-3 px-4 font-semibold">Feature</th>
+                  <th class="text-center py-3 px-4 font-semibold">PersonDirectory</th>
+                  <th class="text-center py-3 px-4 font-semibold">LargePersonGroup</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr>
+                  <td class="py-3 px-4 font-medium">Maximum Capacity</td>
+                  <td class="py-3 px-4 text-center text-green-600 font-semibold">20 million identities</td>
+                  <td class="py-3 px-4 text-center">1 million persons</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Training Required</td>
+                  <td class="py-3 px-4 text-center text-green-600 font-semibold">No</td>
+                  <td class="py-3 px-4 text-center text-red-600">Yes</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Update Latency</td>
+                  <td class="py-3 px-4 text-center text-green-600 font-semibold">Minutes</td>
+                  <td class="py-3 px-4 text-center text-red-600">Up to 30 minutes</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Data Duplication</td>
+                  <td class="py-3 px-4 text-center text-green-600 font-semibold">No (references)</td>
+                  <td class="py-3 px-4 text-center text-red-600">Yes</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Dynamic Groups</td>
+                  <td class="py-3 px-4 text-center text-green-600 font-semibold">Supported</td>
+                  <td class="py-3 px-4 text-center text-red-600">Limited</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 font-medium">Recommended For</td>
+                  <td class="py-3 px-4 text-center text-green-600 font-semibold">New development</td>
+                  <td class="py-3 px-4 text-center text-yellow-600">Legacy systems</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-4 text-sm text-sage">
+            <a href="https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/concept-face-recognition-data-structures" class="citation-link">[Azure Face API Data Structures]</a>
+          </p>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Ethical Considerations -->
+      <section id="ethics" class="py-16 px-8 max-w-7xl mx-auto">
+        <h2 class="font-serif text-4xl font-bold text-charcoal mb-12">Responsible AI &amp; Ethical Considerations</h2>
+
+        <div class="grid lg:grid-cols-2 gap-12 mb-12">
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Addressing Algorithmic Bias</h3>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg mb-6">
+              <h4 class="font-semibold mb-4">Bias Mitigation Strategies</h4>
+              <div class="space-y-3">
+                <div class="flex items-start">
+                  <i class="fas fa-users text-accent mr-3 mt-1"></i>
+                  <div>
+                    <h5 class="font-medium">Diverse Enrollment</h5>
+                    <p class="text-sm text-sage">Ensure representative dataset across demographic groups</p>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-chart-bar text-accent mr-3 mt-1"></i>
+                  <div>
+                    <h5 class="font-medium">Regular Auditing</h5>
+                    <p class="text-sm text-sage">Test accuracy across different demographic segments</p>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <i class="fas fa-cog text-accent mr-3 mt-1"></i>
+                  <div>
+                    <h5 class="font-medium">Latest Models</h5>
+                    <p class="text-sm text-sage">Use recognition_04 for improved fairness</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+              <h4 class="font-semibold mb-4">Transparency Measures</h4>
+              <ul class="space-y-2 text-sm text-sage">
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>Clear communication about system capabilities</li>
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>Open acknowledgment of limitations</li>
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>Regular performance reporting</li>
+                <li class="flex items-center"><i class="fas fa-check text-accent mr-2"></i>Employee feedback mechanisms</li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="font-serif text-2xl font-semibold mb-6">Building User Trust</h3>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg mb-6">
+              <h4 class="font-semibold mb-4">Consent &amp; Data Rights</h4>
+              <div class="space-y-3">
+                <div class="p-4 bg-warm-gray rounded-lg">
+                  <h5 class="font-medium mb-2">Meaningful Consent</h5>
+                  <p class="text-sm text-sage">Freely given, specific, informed, and unambiguous agreement</p>
+                </div>
+                <div class="p-4 bg-warm-gray rounded-lg">
+                  <h5 class="font-medium mb-2">Right to Deletion</h5>
+                  <p class="text-sm text-sage">Simple process for data erasure upon request</p>
+                </div>
+                <div class="p-4 bg-warm-gray rounded-lg">
+                  <h5 class="font-medium mb-2">Data Access</h5>
+                  <p class="text-sm text-sage">Transparent access to personal biometric data</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-lg">
+              <h4 class="font-semibold mb-4">Fallback Mechanisms</h4>
+              <ul class="space-y-2 text-sm text-sage">
+                <li class="flex items-center"><i class="fas fa-key text-accent mr-2"></i>Alternative authentication methods</li>
+                <li class="flex items-center"><i class="fas fa-user-friends text-accent mr-2"></i>Human-in-the-loop reviews</li>
+                <li class="flex items-center"><i class="fas fa-exclamation-triangle text-accent mr-2"></i>Graceful failure handling</li>
+                <li class="flex items-center"><i class="fas fa-headset text-accent mr-2"></i>Support for technical issues</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-accent/10 to-charcoal/10 rounded-2xl p-8">
+          <h3 class="font-serif text-2xl font-semibold mb-6 text-center">Responsible AI Principles</h3>
+          <div class="grid md:grid-cols-4 gap-6">
+            <div class="text-center">
+              <div class="bg-accent text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-balance-scale text-xl"></i>
+              </div>
+              <h4 class="font-semibold mb-2">Fairness</h4>
+              <p class="text-sm text-sage">Equal treatment across all demographic groups</p>
+            </div>
+            <div class="text-center">
+              <div class="bg-accent text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-eye text-xl"></i>
+              </div>
+              <h4 class="font-semibold mb-2">Transparency</h4>
+              <p class="text-sm text-sage">Clear communication about system operations</p>
+            </div>
+            <div class="text-center">
+              <div class="bg-accent text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-shield-alt text-xl"></i>
+              </div>
+              <h4 class="font-semibold mb-2">Privacy</h4>
+              <p class="text-sm text-sage">Robust protection of biometric data</p>
+            </div>
+            <div class="text-center">
+              <div class="bg-accent text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-shield text-xl"></i>
+              </div>
+              <h4 class="font-semibold mb-2">Accountability</h4>
+              <p class="text-sm text-sage">Clear responsibility for system outcomes</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-charcoal text-white py-12 px-8">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center">
+            <h3 class="font-serif text-2xl font-semibold mb-4">Implementation Guide Summary</h3>
+            <p class="text-gray-300 mb-6 max-w-3xl mx-auto">
+              This comprehensive guide provides the foundation for building a scalable, secure, and ethical face recognition system for enterprise employee check-in applications. The Azure Face API approach offers robust capabilities while maintaining compliance with privacy regulations.
+            </p>
+            <div class="flex justify-center space-x-6 text-sm">
+              <a href="#" class="text-accent hover:text-accent/80">Azure Documentation</a>
+              <a href="#" class="text-accent hover:text-accent/80">GDPR Guidelines</a>
+              <a href="#" class="text-accent hover:text-accent/80">Best Practices</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#059669',
+                primaryTextColor: '#374151',
+                primaryBorderColor: '#059669',
+                lineColor: '#6b7280',
+                sectionBkgColor: '#ffffff',
+                altSectionBkgColor: '#f9fafb',
+                gridColor: '#e5e7eb',
+                secondaryColor: '#e0f2fe',
+                tertiaryColor: '#fff3e0',
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f9fafb',
+                tertiaryBkg: '#ffffff',
+                // Enhanced contrast settings
+                nodeBorder: '#059669',
+                clusterBkg: '#f9fafb',
+                clusterBorder: '#d1d5db',
+                defaultLinkColor: '#6b7280',
+                titleColor: '#374151',
+                edgeLabelBackground: '#ffffff'
+            },
+            flowchart: {
+                nodeSpacing: 60,
+                rankSpacing: 80,
+                curve: 'basis',
+                padding: 20
+            },
+            sequence: {
+                diagramMarginX: 50,
+                diagramMarginY: 10,
+                actorMargin: 50,
+                width: 150,
+                height: 65,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35
+            }
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // 获取两点之间的距离
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - 触摸事件处理
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // 单指拖动
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // 双指缩放
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // 单指拖动
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // 双指缩放
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // 重置状态
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // 延迟重置isTouch，避免鼠标事件立即触发
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // 从双指变为单指，切换为拖动模式
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Table of Contents functionality
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sections = document.querySelectorAll('section[id]');
+
+        // Smooth scrolling for TOC links
+        tocLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                const targetSection = document.getElementById(targetId);
+                if (targetSection) {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Active section highlighting
+        function updateActiveSection() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveSection);
+        updateActiveSection(); // Initial call
+
+        // Mobile TOC toggle
+        const tocToggle = document.createElement('button');
+        tocToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        tocToggle.className = 'fixed top-4 left-4 z-50 bg-accent text-white p-3 rounded-lg shadow-lg lg:hidden';
+        document.body.appendChild(tocToggle);
+
+        const tocFixed = document.querySelector('.toc-fixed');
+        
+        tocToggle.addEventListener('click', () => {
+            tocFixed.classList.toggle('open');
+        });
+
+        // Close TOC when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 1024) {
+                if (!tocFixed.contains(e.target) && !tocToggle.contains(e.target)) {
+                    tocFixed.classList.remove('open');
+                }
+            }
+        });
+
+        // Adjust main content margin when TOC is open/closed
+        tocFixed.addEventListener('transitionend', () => {
+            const mainContent = document.querySelector('.main-content');
+            if (tocFixed.classList.contains('open')) {
+                mainContent.style.marginLeft = '280px';
+            } else {
+                mainContent.style.marginLeft = '0';
+            }
+        });
+
+        // Handle window resize to ensure proper layout
+        function handleResize() {
+            const mainContent = document.querySelector('.main-content');
+            if (window.innerWidth >= 1025) {
+                // Large screen: always show TOC and set margin
+                tocFixed.classList.remove('open');
+                tocFixed.style.transform = 'translateX(0)';
+                mainContent.style.marginLeft = '280px';
+            } else {
+                // Small screen: hide TOC and remove margin
+                tocFixed.classList.remove('open');
+                mainContent.style.marginLeft = '0';
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Initial call to set correct state
+
+        // Initialize mermaid controls when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMermaidControls();
+        });
+    </script>
+  
+
+</body></html>
