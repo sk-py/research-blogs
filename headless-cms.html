@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building a Multi-Company CMS: A Strategic Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --secondary: #f0fdfa;
+            --accent: #5eead4;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .serif {
+            font-family: 'Crimson Text', serif;
+        }
+
+        .toc {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 2rem 1.5rem;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--secondary) 0%, #ffffff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            min-height: 70vh;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-visual {
+            position: relative;
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .citation {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .citation:hover {
+            border-bottom-color: var(--primary);
+        }
+
+        .section-header {
+            border-left: 4px solid var(--primary);
+            padding-left: 1.5rem;
+            margin: 4rem 0 2rem 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .warning-card {
+            background: #fffbeb;
+            border-color: #fbbf24;
+        }
+
+        .success-card {
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 1.25rem;
+            width: 2px;
+            height: calc(100% + 1rem);
+            background: var(--border);
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 1024px) {
+            .toc {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .toc.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .mermaid-control-btn:not(.reset-zoom) {
+                display: none;
+            }
+
+            .mermaid-controls {
+                top: auto;
+                bottom: 15px;
+                right: 15px;
+            }
+        }
+
+        /* Additional media query for small screens (max-width: 768px) */
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+
+            .hero-content p {
+                font-size: 1rem;
+            }
+
+            .hero-visual {
+                padding: 1rem;
+            }
+
+            .hero-visual img {
+                height: auto;
+                max-height: 200px;
+            }
+
+            .px-8 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .section-header h2 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button id="mobile-menu-toggle" class="fixed top-4 left-4 z-50 lg:hidden bg-white p-2 rounded-lg shadow-md">
+        <i class="fas fa-bars text-gray-600"></i>
+    </button>
+
+    <!-- Table of Contents -->
+    <nav id="toc" class="toc">
+        <div class="mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Contents</h2>
+            <ul class="space-y-2 text-sm">
+                <li>
+                    <a href="#executive-summary" class="text-gray-600 hover:text-teal-600 transition-colors">Executive
+                        Summary</a>
+                </li>
+                <li>
+                    <a href="#analysis" class="text-gray-600 hover:text-teal-600 transition-colors">Strapi Analysis</a>
+                </li>
+                <li>
+                    <a href="#alternatives" class="text-gray-600 hover:text-teal-600 transition-colors">Alternative
+                        Platforms</a>
+                </li>
+                <li>
+                    <a href="#architecture" class="text-gray-600 hover:text-teal-600 transition-colors">Hybrid
+                        Architecture</a>
+                </li>
+                <li>
+                    <a href="#implementation" class="text-gray-600 hover:text-teal-600 transition-colors">Implementation
+                        Guide</a>
+                </li>
+                <li>
+                    <a href="#comparison" class="text-gray-600 hover:text-teal-600 transition-colors">Solution
+                        Comparison</a>
+                </li>
+                <li>
+                    <a href="#resources" class="text-gray-600 hover:text-teal-600 transition-colors">Resources</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="mt-12 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-semibold text-sm text-gray-900 mb-2">Key Insights</h3>
+            <ul class="text-xs text-gray-600 space-y-1">
+                <li>• Hybrid approach recommended</li>
+                <li>• 15-20 day timeline feasible</li>
+                <li>• Built-in multi-tenancy avoided</li>
+                <li>• Custom admin panel required</li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="px-8 py-16">
+                <div class="max-w-7xl mx-auto">
+                    <div class="hero-grid">
+                        <div class="hero-content">
+                            <div class="mb-6">
+                                <span
+                                    class="inline-block px-3 py-1 bg-teal-100 text-teal-800 text-sm font-medium rounded-full">
+                                    Strategic Analysis
+                                </span>
+                            </div>
+                            <h1 class="serif text-gray-900 italic">
+                                Building a Multi-Company CMS
+                            </h1>
+                            <p class="text-xl text-gray-600 mb-8 max-w-2xl">
+                                A comprehensive evaluation of Strapi&#39;s feasibility for creating a secure, scalable
+                                content management system serving multiple independent companies within an aggressive
+                                15-20 day timeline.
+                            </p>
+                            <div class="flex items-center space-x-6 text-sm text-gray-500">
+                                <span><i class="fas fa-calendar-alt mr-2"></i>August 2025</span>
+                                <span><i class="fas fa-clock mr-2"></i>15-20 days timeline</span>
+                                <span><i class="fas fa-users mr-2"></i>40-50 companies</span>
+                            </div>
+                        </div>
+
+                        <div class="hero-visual">
+                            <img src="https://kimi-web-img.moonshot.cn/img/miro.medium.com/3c07f73fa81f9c64997cc46335864a0610d6770b.png"
+                                alt="Abstract multi-tenant architecture with connected nodes"
+                                class="w-full h-64 object-cover rounded-lg mb-4" size="medium" aspect="wide"
+                                query="abstract multi tenant architecture" referrerpolicy="no-referrer"
+                                data-modified="1" data-score="0.00" />
+                            <div class="grid grid-cols-3 gap-4 text-center">
+                                <div class="p-3 bg-teal-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-teal-600">Hybrid</div>
+                                    <div class="text-xs text-gray-600">Architecture</div>
+                                </div>
+                                <div class="p-3 bg-blue-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-blue-600">Next.js</div>
+                                    <div class="text-xs text-gray-600">Admin Panel</div>
+                                </div>
+                                <div class="p-3 bg-purple-50 rounded-lg">
+                                    <div class="text-2xl font-bold text-purple-600">Strapi</div>
+                                    <div class="text-xs text-gray-600">Backend</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Executive Summary -->
+        <section id="executive-summary" class="px-8 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="section-header">
+                    <h2 class="serif text-3xl font-semibold text-gray-900">Executive Summary</h2>
+                    <p class="text-gray-600 mt-2">Key findings and strategic recommendations</p>
+                </div>
+
+                <div class="success-card card">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                        Primary Recommendation: Hybrid Architecture
+                    </h3>
+                    <p class="text-gray-700 mb-4">
+                        A direct implementation using a single Strapi instance is <strong>not recommended</strong> due
+                        to significant security and complexity risks. Instead, build a custom administrative interface
+                        using React/Next.js that interacts with a single Strapi instance acting as a partitioned content
+                        repository.
+                    </p>
+                    <div class="grid md:grid-cols-3 gap-4 mt-6">
+                        <div class="text-center p-4 bg-white rounded-lg border">
+                            <div class="text-2xl font-bold text-teal-600">✓</div>
+                            <div class="text-sm font-medium">Security</div>
+                            <div class="text-xs text-gray-600">Application-level isolation</div>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-lg border">
+                            <div class="text-2xl font-bold text-teal-600">✓</div>
+                            <div class="text-sm font-medium">Timeline</div>
+                            <div class="text-xs text-gray-600">15-20 days feasible</div>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-lg border">
+                            <div class="text-2xl font-bold text-teal-600">✓</div>
+                            <div class="text-sm font-medium">Scalability</div>
+                            <div class="text-xs text-gray-600">40-50 companies</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6 mt-8">
+                    <div class="card">
+                        <h4 class="font-semibold text-gray-900 mb-3">Core Challenge</h4>
+                        <p class="text-gray-700 text-sm">
+                            Strapi is not natively designed for true multi-tenancy within a single instance. Its
+                            architecture follows a &#34;one project per instance&#34; model, lacking built-in features
+                            for securely partitioning data between multiple tenants.
+                        </p>
+                    </div>
+                    <div class="card">
+                        <h4 class="font-semibold text-gray-900 mb-3">Alternative Considered</h4>
+                        <p class="text-gray-700 text-sm">
+                            A fully custom-built CMS would offer complete control but is not recommended due to the
+                            extensive development timeline required, far exceeding the 15-20 day constraint.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Section -->
+        <section id="analysis" class="px-8 py-12 bg-gray-50">
+            <div class="max-w-4xl mx-auto">
+                <div class="section-header">
+                    <h2 class="serif text-3xl font-semibold text-gray-900">In-Depth Analysis of Strapi for Multi-Tenancy
+                    </h2>
+                    <p class="text-gray-600 mt-2">Understanding the limitations and official recommendations</p>
+                </div>
+
+                <div class="warning-card card">
+                    <h3 class="text-lg font-semibold text-amber-800 mb-3">
+                        <i class="fas fa-exclamation-triangle text-amber-600 mr-2"></i>
+                        Official Strapi Stance: Discouraged for Single-Instance Multi-Tenancy
+                    </h3>
+                    <p class="text-gray-700 mb-4">
+                        Strapi&#39;s official documentation consistently advises against implementing true multi-tenant
+                        architecture within a single instance. The platform&#39;s design philosophy centers on a <a
+                            href="https://strapi.io/blog/multi-tenancy-in-strapi-a-comprehensive-guide"
+                            class="citation">&#34;one instance, one project&#34; model</a>, prioritizing stability and
+                        security over multi-tenancy complexity.
+                    </p>
+
+                    <div class="grid md:grid-cols-2 gap-4 mt-6">
+                        <div class="bg-white p-4 rounded-lg">
+                            <h4 class="font-semibold text-red-700 mb-2">Security Risks</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• Potential for data leakage between companies</li>
+                                <li>• Shared Media Library without isolation</li>
+                                <li>• Complex custom filtering requirements</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg">
+                            <h4 class="font-semibold text-red-700 mb-2">Performance Concerns</h4>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• Degraded query performance with tenant filtering</li>
+                                <li>• &#34;Noisy neighbor&#34; problem affecting all tenants</li>
+                                <li>• Maintenance complexity for shared schema</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-8">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Community Workarounds: &#34;Pseudo
+                        Multi-Tenancy&#34;</h3>
+                    <p class="text-gray-700 mb-4">
+                        The Strapi community has developed a workaround using <a
+                            href="https://medium.com/strapi/how-to-build-a-pseudo-multi-tenant-application-in-strapi-5b877e2b2951"
+                            class="citation">one codebase with multiple databases/instances</a>. While this provides
+                        better isolation, it introduces operational complexity and limits per-tenant customization.
+                    </p>
+
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-2">Strapi&#39;s Official Recommendation</h4>
+                        <p class="text-gray-700">
+                            <a href="https://strapi.io/blog/multi-tenancy-in-strapi-a-comprehensive-guide"
+                                class="citation">Multiple isolated instances</a> - running a completely separate Strapi
+                            instance for each company. This provides true isolation and security but increases
+                            operational overhead significantly.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alternative Platforms -->
+        <section id="alternatives" class="px-8 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="section-header">
+                    <h2 class="serif text-3xl font-semibold text-gray-900">Evaluation of Alternative Headless CMS
+                        Platforms</h2>
+                    <p class="text-gray-600 mt-2">Assessing other solutions for multi-tenancy support</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-900">Hygraph</h3>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Recommended</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">
+                            <a href="https://hygraph.com/case-studies/gamescom-case-study" class="citation">Proven
+                                multi-tenancy features</a> with granular permissions. Successfully handled 200+
+                            exhibitors for gamescom with complete data isolation.
+                        </p>
+                        <div class="text-xs text-gray-600">
+                            <strong>Limitation:</strong> Unclear &#34;master admin&#34; interface documentation
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-900">Sanity</h3>
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Manual</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">
+                            <a href="https://www.linkedin.com/posts/sanity-io_how-to-implement-multi-tenancy-with-sanity-activity-7056302145108615168-7Rl9"
+                                class="citation">Manual implementation via content partitioning</a> using company fields
+                            and workspaces. Flexible but requires significant custom development.
+                        </p>
+                        <div class="text-xs text-gray-600">
+                            <strong>Consideration:</strong> High development effort for RBAC
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-900">Webiny</h3>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Licensing</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-3">
+                            <a href="https://www.webiny.com/docs/overview/features/multi-tenancy"
+                                class="citation">Built-in multi-tenancy</a> with complete data separation. Designed
+                            specifically for SaaS applications.
+                        </p>
+                        <div class="text-xs text-gray-600">
+                            <strong>Challenge:</strong> Multi-tenancy module requires paid license
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="px-8 py-12 bg-gray-50">
+            <div class="max-w-4xl mx-auto">
+                <div class="section-header">
+                    <h2 class="serif text-3xl font-semibold text-gray-900">Recommended Architecture: Hybrid Next.js and
+                        Strapi Solution</h2>
+                    <p class="text-gray-600 mt-2">A pragmatic approach balancing security, timeline, and functionality
+                    </p>
+                </div>
+
+                <div class="success-card card">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Core Concept: Decoupling Admin Interface from
+                        CMS</h3>
+                    <p class="text-gray-700 mb-6">
+                        This architecture strategically separates the administrative interface from content management.
+                        A custom Next.js application handles all user interactions and multi-tenant logic, while Strapi
+                        serves as a secure, partitioned content repository.
+                    </p>
+
+                    <!-- Mermaid Diagram -->
+                    <div class="mermaid-container">
+                        <div class="mermaid-controls">
+                            <button class="mermaid-control-btn zoom-in" title="放大">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button class="mermaid-control-btn zoom-out" title="缩小">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button class="mermaid-control-btn reset-zoom" title="重置">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                            <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                        <div class="mermaid">
+                            graph TB
+                            A[&#34;Next.js Admin Panel&#34;] --&gt; B[&#34;Strapi Content Repository&#34;]
+                            A --&gt; C[&#34;Company A Website&#34;]
+                            A --&gt; D[&#34;Company B Website&#34;]
+                            B --&gt; E[&#34;PostgreSQL Database&#34;]
+                            C --&gt; B
+                            D --&gt; B
+
+                            subgraph &#34;Custom Application Layer&#34;
+                            A
+                            C
+                            D
+                            end
+
+                            subgraph &#34;Content Management Layer&#34;
+                            B
+                            E
+                            end
+
+                            style A fill:#f0fdfa,stroke:#0f766e,stroke-width:3px,color:#0f172a
+                            style B fill:#ecfeff,stroke:#0891b2,stroke-width:3px,color:#0f172a
+                            style E fill:#f0f9ff,stroke:#0284c7,stroke-width:3px,color:#0f172a
+                            style C fill:#faf5ff,stroke:#a855f7,stroke-width:3px,color:#0f172a
+                            style D fill:#faf5ff,stroke:#a855f7,stroke-width:3px,color:#0f172a
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6 mt-8">
+                    <div class="card">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-desktop text-blue-600 mr-2"></i>
+                            Component 1: Next.js Admin Panel
+                        </h4>
+                        <ul class="text-sm text-gray-700 space-y-2">
+                            <li><strong>Master Admin Dashboard:</strong> Company creation and management</li>
+                            <li><strong>Company Admin Interface:</strong> Blog management and user roles</li>
+                            <li><strong>RBAC Implementation:</strong>
+                                <a href="https://www.c-sharpcorner.com/article/how-to-implement-role-based-access-control-in-next-js/"
+                                    class="citation">Role-Based Access Control</a>
+                            </li>
+                            <li><strong>Authentication:</strong> Secure user sessions and permissions</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-database text-teal-600 mr-2"></i>
+                            Component 2: Strapi Content Repository
+                        </h4>
+                        <ul class="text-sm text-gray-700 space-y-2">
+                            <li><strong>Data Storage:</strong> Blogs, users, and company records</li>
+                            <li><strong>Data Isolation:</strong> Company field partitioning strategy</li>
+                            <li><strong>API Exposure:</strong> Secure endpoints for content access</li>
+                            <li><strong>Media Management:</strong> Centralized asset storage</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card mt-8">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4">Integration Strategy</h4>
+                    <p class="text-gray-700 mb-4">
+                        The Next.js admin panel interacts with Strapi exclusively through its API. All requests include
+                        company-specific filters to ensure data isolation, while authentication flows through <a
+                            href="https://medium.com/@kallyasmedia/level-up-your-react-apps-secure-with-role-based-access-control-rbac-50ca21a36c56"
+                            class="citation">secure JWT token exchange</a>.
+                    </p>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="text-sm font-medium text-gray-800 mb-2">Security Flow:</div>
+                        <ol class="text-sm text-gray-700 space-y-1">
+                            <li>1. User credentials sent to Next.js API route</li>
+                            <li>2. Next.js forwards to Strapi authentication endpoint</li>
+                            <li>3. JWT token returned and stored in secure session</li>
+                            <li>4. All subsequent requests include company filtering</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Implementation Guide -->
+        <section id="implementation" class="px-8 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="section-header">
+                    <h2 class="serif text-3xl font-semibold text-gray-900">Implementation Guide and Timeline</h2>
+                    <p class="text-gray-600 mt-2">Structured development phases for the 15-20 day delivery</p>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="timeline-item">
+                        <div class="bg-white p-6 rounded-lg border shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 1: Project Setup and Core
+                                    Architecture</h3>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Days 1-3</span>
+                            </div>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Initialize Projects</strong>
+                                    <p class="text-gray-600">Set up Next.js and Strapi codebases</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Database Setup</strong>
+                                    <p class="text-gray-600">Configure PostgreSQL for Strapi</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Content Models</strong>
+                                    <p class="text-gray-600">Define Blogs, Users, Companies</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="bg-white p-6 rounded-lg border shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 2: Building the Custom Admin Panel
+                                </h3>
+                                <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">Days
+                                    4-10</span>
+                            </div>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Master Admin Dashboard</strong>
+                                    <p class="text-gray-600">Company management interface</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Company Management</strong>
+                                    <p class="text-gray-600">Blog editing and user roles</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">RBAC Integration</strong>
+                                    <p class="text-gray-600">Secure permission system</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="bg-white p-6 rounded-lg border shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 3: Frontend Integration and API
+                                    Security</h3>
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-sm rounded-full">Days
+                                    11-15</span>
+                            </div>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Frontend Connection</strong>
+                                    <p class="text-gray-600">Connect Next.js to Strapi API</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Dynamic Routing</strong>
+                                    <p class="text-gray-600">Company-specific blog URLs</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Security Filtering</strong>
+                                    <p class="text-gray-600">API endpoint protection</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="bg-white p-6 rounded-lg border shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Phase 4: Testing, Deployment, and Polish
+                                </h3>
+                                <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">Days
+                                    16-20</span>
+                            </div>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">End-to-End Testing</strong>
+                                    <p class="text-gray-600">Multi-tenant functionality validation</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">Azure Deployment</strong>
+                                    <p class="text-gray-600">Production environment setup</p>
+                                </div>
+                                <div class="text-sm">
+                                    <strong class="text-gray-800">UI/UX Polish</strong>
+                                    <p class="text-gray-600">Final refinements and bug fixes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison Section -->
+        <section id="comparison" class="px-8 py-12 bg-gray-50">
+            <div class="max-w-4xl mx-auto">
+                <div class="section-header">
+                    <h2 class="serif text-3xl font-semibold text-gray-900">Solution Comparison: Strapi vs. Custom Build
+                    </h2>
+                    <p class="text-gray-600 mt-2">Evaluating the trade-offs between hybrid and fully custom approaches
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full bg-white rounded-lg shadow-sm border">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Feature</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-teal-700">Using Strapi
+                                    (Hybrid)</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Custom Solution</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">Development Speed</td>
+                                <td class="px-6 py-4 text-sm text-teal-700"><strong>Faster</strong> - Leverages existing
+                                    CMS features</td>
+                                <td class="px-6 py-4 text-sm text-gray-600"><strong>Significantly Slower</strong> -
+                                    Everything built from scratch</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">Core CMS Features</td>
+                                <td class="px-6 py-4 text-sm text-teal-700"><strong>High</strong> - Mature features
+                                    out-of-the-box</td>
+                                <td class="px-6 py-4 text-sm text-gray-600"><strong>Low to Medium</strong> - Limited
+                                    initial feature set</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">Flexibility &amp; Control</td>
+                                <td class="px-6 py-4 text-sm text-teal-700"><strong>Medium</strong> - Constrained by
+                                    Strapi&#39;s framework</td>
+                                <td class="px-6 py-4 text-sm text-gray-600"><strong>Complete</strong> - Full control
+                                    over everything</td>
+                            </tr>
+                            <tr class="bg-gray-50">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">Security</td>
+                                <td class="px-6 py-4 text-sm text-teal-700"><strong>Good</strong> - Application-layer
+                                    security</td>
+                                <td class="px-6 py-4 text-sm text-gray-600"><strong>Variable</strong> - Entirely
+                                    team-dependent</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">Timeline Feasibility</td>
+                                <td class="px-6 py-4 text-sm text-teal-700"><strong>Feasible</strong> - 15-20 days
+                                    achievable</td>
+                                <td class="px-6 py-4 text-sm text-gray-600"><strong>Not Feasible</strong> - Would take
+                                    several months</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-8 p-6 bg-white rounded-lg border shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Key Takeaway</h3>
+                    <p class="text-gray-700">
+                        The hybrid approach provides the optimal balance of development speed, security, and
+                        functionality for the 15-20 day timeline. While a custom solution offers complete control, the
+                        development timeline makes it impractical for this project.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Resources Section -->
+        <section id="resources" class="px-8 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="section-header">
+                    <h2 class="serif text-3xl font-semibold text-gray-900">Helpful Resources and Further Reading</h2>
+                    <p class="text-gray-600 mt-2">Essential guides and documentation for implementation</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="card">
+                        <h3 class="font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-book text-blue-600 mr-2"></i>
+                            Strapi Multi-Tenancy Guides
+                        </h3>
+                        <ul class="space-y-3 text-sm">
+                            <li>
+                                <a href="https://github.com/strapi/community-content/issues/989"
+                                    class="citation">Community Discussion on Multi-Tenancy</a>
+                                <p class="text-gray-600 text-xs mt-1">Forum thread discussing various approaches and
+                                    challenges</p>
+                            </li>
+                            <li>
+                                <a href="https://medium.com/strapi/how-to-build-a-pseudo-multi-tenant-application-in-strapi-5b877e2b2951"
+                                    class="citation">Pseudo Multi-Tenant Application Guide</a>
+                                <p class="text-gray-600 text-xs mt-1">Step-by-step walkthrough of the community
+                                    workaround</p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-shield-alt text-green-600 mr-2"></i>
+                            RBAC Implementation
+                        </h3>
+                        <ul class="space-y-3 text-sm">
+                            <li>
+                                <a href="https://www.c-sharpcorner.com/article/how-to-implement-role-based-access-control-in-next-js/"
+                                    class="citation">RBAC in Next.js</a>
+                                <p class="text-gray-600 text-xs mt-1">Comprehensive guide to implementing role-based
+                                    access control</p>
+                            </li>
+                            <li>
+                                <a href="https://clerk.com/blog/nextjs-role-based-access-control"
+                                    class="citation">Next.js Middleware for RBAC</a>
+                                <p class="text-gray-600 text-xs mt-1">Using middleware for server-side route protection
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-code text-purple-600 mr-2"></i>
+                            Alternative CMS Resources
+                        </h3>
+                        <ul class="space-y-3 text-sm">
+                            <li>
+                                <a href="https://hygraph.com/case-studies/gamescom-case-study" class="citation">Hygraph
+                                    Gamescom Case Study</a>
+                                <p class="text-gray-600 text-xs mt-1">Real-world implementation with 200+ tenants</p>
+                            </li>
+                            <li>
+                                <a href="https://www.linkedin.com/posts/sanity-io_how-to-implement-multi-tenancy-with-sanity-activity-7056302145108615168-7Rl9"
+                                    class="citation">Sanity Multi-Tenancy Guide</a>
+                                <p class="text-gray-600 text-xs mt-1">Content partitioning and workspace configuration
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="font-semibold text-gray-900 mb-4">
+                            <i class="fas fa-cogs text-orange-600 mr-2"></i>
+                            Development Best Practices
+                        </h3>
+                        <ul class="space-y-3 text-sm">
+                            <li>
+                                <a href="https://medium.com/@kallyasmedia/level-up-your-react-apps-secure-with-role-based-access-control-rbac-50ca21a36c56"
+                                    class="citation">Secure React Applications</a>
+                                <p class="text-gray-600 text-xs mt-1">Security patterns for modern web applications</p>
+                            </li>
+                            <li>
+                                <a href="https://github.com/strapi/community-content/issues/1525"
+                                    class="citation">Multi-Tenant SaaS Tutorial Proposal</a>
+                                <p class="text-gray-600 text-xs mt-1">Comprehensive tutorial covering advanced tenant
+                                    isolation</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="px-8 py-12 bg-gray-900 text-white">
+            <div class="max-w-4xl mx-auto text-center">
+                <p class="text-gray-400 mb-4">
+                    This analysis provides a comprehensive evaluation of building a multi-company CMS using Strapi
+                    within a 15-20 day timeline.
+                </p>
+                <div class="flex justify-center space-x-6 text-sm text-gray-500">
+                    <span><i class="fas fa-calendar-alt mr-2"></i>August 2025</span>
+                    <span><i class="fas fa-clock mr-2"></i>15-20 Days Timeline</span>
+                    <span><i class="fas fa-users mr-2"></i>Multi-Tenant Architecture</span>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                // Primary nodes (Next.js Admin Panel)
+                primaryColor: '#f0fdfa',
+                primaryTextColor: '#0f172a',
+                primaryBorderColor: '#0f766e',
+
+                // Secondary nodes (Strapi Content Repository)
+                secondaryColor: '#ecfeff',
+                secondaryTextColor: '#0f172a',
+                secondaryBorderColor: '#0891b2',
+
+                // Tertiary nodes (PostgreSQL Database)
+                tertiaryColor: '#f0f9ff',
+                tertiaryTextColor: '#0f172a',
+                tertiaryBorderColor: '#0284c7',
+
+                // Company websites
+                quaternaryColor: '#faf5ff',
+                quaternaryTextColor: '#0f172a',
+                quaternaryBorderColor: '#a855f7',
+
+                // Background and general styling
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                lineColor: '#64748b',
+                edgeLabelBackground: '#ffffff',
+                clusterBkg: '#f8fafc',
+                clusterBorder: '#e2e8f0',
+
+                // Text styling
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '14px',
+                fontWeight: '500',
+
+                // Node styling
+                nodeBorder: '2px',
+                clusterBorder: '1px',
+
+                // Specific node type colors for better contrast
+                cScale0: '#f0fdfa',
+                cScale1: '#ecfeff',
+                cScale2: '#f0f9ff',
+                cScale3: '#faf5ff',
+                cScale4: '#fef3c7'
+            },
+            flowchart: {
+                nodeSpacing: 60,
+                rankSpacing: 80,
+                curve: 'basis',
+                padding: 20,
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+                const mermaidElement = container.querySelector('.mermaid');
+                let scale = 1;
+                let isDragging = false;
+                let startX, startY, translateX = 0, translateY = 0;
+
+                // 触摸相关状态
+                let isTouch = false;
+                let touchStartTime = 0;
+                let initialDistance = 0;
+                let initialScale = 1;
+                let isPinching = false;
+
+                // Zoom controls
+                const zoomInBtn = container.querySelector('.zoom-in');
+                const zoomOutBtn = container.querySelector('.zoom-out');
+                const resetBtn = container.querySelector('.reset-zoom');
+                const fullscreenBtn = container.querySelector('.fullscreen');
+
+                function updateTransform() {
+                    mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                    if (scale > 1) {
+                        container.classList.add('zoomed');
+                    } else {
+                        container.classList.remove('zoomed');
+                    }
+
+                    mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+                }
+
+                if (zoomInBtn) {
+                    zoomInBtn.addEventListener('click', () => {
+                        scale = Math.min(scale * 1.25, 4);
+                        updateTransform();
+                    });
+                }
+
+                if (zoomOutBtn) {
+                    zoomOutBtn.addEventListener('click', () => {
+                        scale = Math.max(scale / 1.25, 0.3);
+                        if (scale <= 1) {
+                            translateX = 0;
+                            translateY = 0;
+                        }
+                        updateTransform();
+                    });
+                }
+
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', () => {
+                        scale = 1;
+                        translateX = 0;
+                        translateY = 0;
+                        updateTransform();
+                    });
+                }
+
+                if (fullscreenBtn) {
+                    fullscreenBtn.addEventListener('click', () => {
+                        if (container.requestFullscreen) {
+                            container.requestFullscreen();
+                        } else if (container.webkitRequestFullscreen) {
+                            container.webkitRequestFullscreen();
+                        } else if (container.msRequestFullscreen) {
+                            container.msRequestFullscreen();
+                        }
+                    });
+                }
+
+                // Mouse Events
+                mermaidElement.addEventListener('mousedown', (e) => {
+                    if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                    isDragging = true;
+                    startX = e.clientX - translateX;
+                    startY = e.clientY - translateY;
+                    mermaidElement.style.cursor = 'grabbing';
+                    updateTransform();
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging && !isTouch) {
+                        translateX = e.clientX - startX;
+                        translateY = e.clientY - startY;
+                        updateTransform();
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (isDragging && !isTouch) {
+                        isDragging = false;
+                        mermaidElement.style.cursor = 'grab';
+                        updateTransform();
+                    }
+                });
+
+                document.addEventListener('mouseleave', () => {
+                    if (isDragging && !isTouch) {
+                        isDragging = false;
+                        mermaidElement.style.cursor = 'grab';
+                        updateTransform();
+                    }
+                });
+
+                // 获取两点之间的距离
+                function getTouchDistance(touch1, touch2) {
+                    return Math.hypot(
+                        touch2.clientX - touch1.clientX,
+                        touch2.clientY - touch1.clientY
+                    );
+                }
+
+                // Touch Events - 触摸事件处理
+                mermaidElement.addEventListener('touchstart', (e) => {
+                    isTouch = true;
+                    touchStartTime = Date.now();
+
+                    if (e.touches.length === 1) {
+                        // 单指拖动
+                        isPinching = false;
+                        isDragging = true;
+
+                        const touch = e.touches[0];
+                        startX = touch.clientX - translateX;
+                        startY = touch.clientY - translateY;
+
+                    } else if (e.touches.length === 2) {
+                        // 双指缩放
+                        isPinching = true;
+                        isDragging = false;
+
+                        const touch1 = e.touches[0];
+                        const touch2 = e.touches[1];
+                        initialDistance = getTouchDistance(touch1, touch2);
+                        initialScale = scale;
+                    }
+
+                    e.preventDefault();
+                }, { passive: false });
+
+                mermaidElement.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 1 && isDragging && !isPinching) {
+                        // 单指拖动
+                        const touch = e.touches[0];
+                        translateX = touch.clientX - startX;
+                        translateY = touch.clientY - startY;
+                        updateTransform();
+
+                    } else if (e.touches.length === 2 && isPinching) {
+                        // 双指缩放
+                        const touch1 = e.touches[0];
+                        const touch2 = e.touches[1];
+                        const currentDistance = getTouchDistance(touch1, touch2);
+
+                        if (initialDistance > 0) {
+                            const newScale = Math.min(Math.max(
+                                initialScale * (currentDistance / initialDistance),
+                                0.3
+                            ), 4);
+                            scale = newScale;
+                            updateTransform();
+                        }
+                    }
+
+                    e.preventDefault();
+                }, { passive: false });
+
+                mermaidElement.addEventListener('touchend', (e) => {
+                    // 重置状态
+                    if (e.touches.length === 0) {
+                        isDragging = false;
+                        isPinching = false;
+                        initialDistance = 0;
+
+                        // 延迟重置isTouch，避免鼠标事件立即触发
+                        setTimeout(() => {
+                            isTouch = false;
+                        }, 100);
+                    } else if (e.touches.length === 1 && isPinching) {
+                        // 从双指变为单指，切换为拖动模式
+                        isPinching = false;
+                        isDragging = true;
+
+                        const touch = e.touches[0];
+                        startX = touch.clientX - translateX;
+                        startY = touch.clientY - translateY;
+                    }
+
+                    updateTransform();
+                });
+
+                mermaidElement.addEventListener('touchcancel', (e) => {
+                    isDragging = false;
+                    isPinching = false;
+                    initialDistance = 0;
+
+                    setTimeout(() => {
+                        isTouch = false;
+                    }, 100);
+
+                    updateTransform();
+                });
+
+                // Enhanced wheel zoom with better center point handling
+                container.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const rect = container.getBoundingClientRect();
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                    // Adjust translation to zoom towards center
+                    if (newScale !== scale) {
+                        const scaleDiff = newScale / scale;
+                        translateX = translateX * scaleDiff;
+                        translateY = translateY * scaleDiff;
+                        scale = newScale;
+
+                        if (scale <= 1) {
+                            translateX = 0;
+                            translateY = 0;
+                        }
+
+                        updateTransform();
+                    }
+                });
+
+                // Initialize display
+                updateTransform();
+            });
+        }
+
+        // Initialize everything when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Mermaid controls
+            initializeMermaidControls();
+
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Mobile menu toggle
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const toc = document.getElementById('toc');
+
+            mobileMenuToggle.addEventListener('click', () => {
+                toc.classList.toggle('open');
+            });
+
+            // Close menu when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 1024 && !toc.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
+                    toc.classList.remove('open');
+                }
+            });
+
+            // Highlight current section in TOC
+            const sections = document.querySelectorAll('section[id]');
+            const tocLinks = document.querySelectorAll('.toc a[href^="#"]');
+
+            function highlightCurrentSection() {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.clientHeight;
+                    if (window.scrollY >= sectionTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                tocLinks.forEach(link => {
+                    link.classList.remove('text-teal-600', 'font-semibold');
+                    link.classList.add('text-gray-600');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.remove('text-gray-600');
+                        link.classList.add('text-teal-600', 'font-semibold');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', highlightCurrentSection);
+            highlightCurrentSection(); // Initial call
+        });
+    </script>
+
+
+</body>
+
+</html>
